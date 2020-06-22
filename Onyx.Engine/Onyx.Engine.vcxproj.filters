@@ -11,11 +11,18 @@
     <ClInclude Include="Platform\IWindow.h" />
     <ClInclude Include="Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="Renderer\Frontend\RendererFrontend.h" />
+    <ClInclude Include="Renderer\Backend\IRendererBackend.h" />
+    <ClInclude Include="Renderer\Backend\Vulkan\VulkanRendererBackend.h" />
+    <ClInclude Include="Renderer\Backend\Vulkan\VulkanPlatform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Platform\Windows\WindowsApplication.cpp" />
     <ClCompile Include="Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="Renderer\Frontend\RendererFrontend.cpp" />
+    <ClCompile Include="Renderer\Backend\Vulkan\VulkanRendererBackend.cpp" />
+    <ClCompile Include="Renderer\Backend\Vulkan\VulkanPlatform.cpp" />
   </ItemGroup>
 </Project>

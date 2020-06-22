@@ -9,7 +9,7 @@ namespace Onyx {
 static void WriteLog(const char* prefix, const char* message, va_list args) {
   char buffer[8192];
   vsnprintf(buffer, 8192, message, args);
-  std::cout << "[" << prefix << "]: " << buffer;
+  std::cout << "[" << prefix << "]: " << buffer << "\n";
 }
 
 void Logger::Trace(const char* msg, ...) {
