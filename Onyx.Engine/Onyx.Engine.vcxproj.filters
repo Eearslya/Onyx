@@ -10,10 +10,12 @@
     <ClInclude Include="Input\Input.h" />
     <ClInclude Include="Platform\IWindow.h" />
     <ClInclude Include="Platform\Windows\WindowsWindow.h" />
+    <ClInclude Include="Logger.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Platform\Windows\WindowsApplication.cpp" />
     <ClCompile Include="Platform\Windows\WindowsWindow.cpp" />
+    <ClCompile Include="Logger.cpp" />
   </ItemGroup>
 </Project>

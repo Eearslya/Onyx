@@ -91,12 +91,14 @@
     <ClInclude Include="Onyx.h" />
     <ClInclude Include="Platform\IApplication.h" />
     <ClInclude Include="Platform\IWindow.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="Platform\Windows\WindowsApplication.h" />
     <ClInclude Include="Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="Types.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Platform\Windows\WindowsApplication.cpp" />
     <ClCompile Include="Platform\Windows\WindowsWindow.cpp" />
   </ItemGroup>

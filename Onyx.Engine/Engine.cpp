@@ -1,7 +1,12 @@
 #include "Engine.h"
 
+#include "Logger.h"
+
 namespace Onyx {
-Engine::Engine(IApplication* application) { _application = application; }
+Engine::Engine(IApplication* application) {
+  Logger::Info("Initializing Onyx...");
+  _application = application;
+}
 
 Engine::~Engine() {}
 
