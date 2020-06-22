@@ -30,13 +30,13 @@ const bool VulkanDebugger::Initialize(VkInstance instance, Level level) {
   _instance = instance;
 
   U32 severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-  if (level <= Level::WARNING) {
+  if (level >= Level::WARNING) {
     severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
   }
-  if (level <= Level::INFO) {
+  if (level >= Level::INFO) {
     severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
   }
-  if (level <= Level::TRACE) {
+  if (level >= Level::TRACE) {
     severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
   }
 

@@ -7,6 +7,7 @@
 #include "Platform/IWindow.h"
 #include "Platform/VulkanPlatform.h"
 #include "Renderer/Backend/Vulkan/VulkanDebugger.h"
+#include "Renderer/Backend/Vulkan/VulkanDevice.h"
 #include "Renderer/Backend/Vulkan/VulkanSurface.h"
 
 namespace Onyx {
@@ -15,9 +16,11 @@ VulkanRendererBackend::VulkanRendererBackend(IApplication* application) {
   _application = application;
   _debugger = new VulkanDebugger();
   _surface = new VulkanSurface();
+  _device = new VulkanDevice();
 }
 
 VulkanRendererBackend::~VulkanRendererBackend() {
+  delete _device;
   delete _surface;
   delete _debugger;
 }
@@ -25,7 +28,6 @@ VulkanRendererBackend::~VulkanRendererBackend() {
 const bool VulkanRendererBackend::Initialize(const bool enableValidation) {
   Logger::Trace("Initializing Vulkan renderer backend...");
   _validationEnabled = enableValidation;
-  IWindow* applicationWindow = _application->GetApplicationWindow();
 
   CreateInstance();
 
@@ -33,20 +35,26 @@ const bool VulkanRendererBackend::Initialize(const bool enableValidation) {
     _debugger->Initialize(_instance, VulkanDebugger::Level::WARNING);
   }
 
+  IWindow* applicationWindow = _application->GetApplicationWindow();
   _surface->Initialize(_instance, applicationWindow->GetHandle());
+
+  _device->Initialize(_instance, _validationEnabled, _requiredLayers, _surface);
+  _device->SetFramebufferSize(applicationWindow->GetFramebufferExtent());
 
   return false;
 }
 
 void VulkanRendererBackend::Shutdown() {
+  if (_device) {
+    _device->Shutdown();
+  }
+
   if (_surface) {
     _surface->Shutdown();
   }
 
-  if (_validationEnabled) {
-    if (_debugger) {
-      _debugger->Shutdown();
-    }
+  if (_validationEnabled && _debugger) {
+    _debugger->Shutdown();
   }
 
   if (_instance) {

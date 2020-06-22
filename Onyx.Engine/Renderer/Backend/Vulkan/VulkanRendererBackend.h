@@ -10,6 +10,7 @@ namespace Onyx {
 class IApplication;
 
 class VulkanDebugger;
+class VulkanDevice;
 class VulkanSurface;
 
 class VulkanRendererBackend final : public IRendererBackend {
@@ -35,5 +36,6 @@ class VulkanRendererBackend final : public IRendererBackend {
   VkInstance _instance = nullptr;
   VulkanDebugger* _debugger;
   VulkanSurface* _surface;
+  VulkanDevice* _device;
 };
 }  // namespace Onyx

@@ -17,6 +17,9 @@
     <ClInclude Include="Platform\VulkanPlatform.h" />
     <ClInclude Include="Renderer\Backend\Vulkan\VulkanDebugger.h" />
     <ClInclude Include="Renderer\Backend\Vulkan\VulkanSurface.h" />
+    <ClInclude Include="Renderer\Backend\Vulkan\VulkanDevice.h" />
+    <ClInclude Include="Renderer\Backend\Vulkan\VulkanQueue.h" />
+    <ClInclude Include="Renderer\Backend\Vulkan\VulkanCommandPool.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp" />
@@ -28,5 +31,8 @@
     <ClCompile Include="Platform\Windows\WindowsVulkanPlatform.cpp" />
     <ClCompile Include="Renderer\Backend\Vulkan\VulkanDebugger.cpp" />
     <ClCompile Include="Renderer\Backend\Vulkan\VulkanSurface.cpp" />
+    <ClCompile Include="Renderer\Backend\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="Renderer\Backend\Vulkan\VulkanQueue.cpp" />
+    <ClCompile Include="Renderer\Backend\Vulkan\VulkanCommandPool.cpp" />
   </ItemGroup>
 </Project>

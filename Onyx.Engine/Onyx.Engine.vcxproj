@@ -98,7 +98,10 @@
     <ClInclude Include="Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="Renderer\Backend\IRendererBackend.h" />
     <ClInclude Include="Platform\VulkanPlatform.h" />
+    <ClInclude Include="Renderer\Backend\Vulkan\VulkanCommandPool.h" />
     <ClInclude Include="Renderer\Backend\Vulkan\VulkanDebugger.h" />
+    <ClInclude Include="Renderer\Backend\Vulkan\VulkanDevice.h" />
+    <ClInclude Include="Renderer\Backend\Vulkan\VulkanQueue.h" />
     <ClInclude Include="Renderer\Backend\Vulkan\VulkanRendererBackend.h" />
     <ClInclude Include="Renderer\Backend\Vulkan\VulkanSurface.h" />
     <ClInclude Include="Renderer\Frontend\RendererFrontend.h" />
@@ -110,7 +113,10 @@
     <ClCompile Include="Platform\Windows\WindowsApplication.cpp" />
     <ClCompile Include="Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="Platform\Windows\WindowsVulkanPlatform.cpp" />
+    <ClCompile Include="Renderer\Backend\Vulkan\VulkanCommandPool.cpp" />
     <ClCompile Include="Renderer\Backend\Vulkan\VulkanDebugger.cpp" />
+    <ClCompile Include="Renderer\Backend\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="Renderer\Backend\Vulkan\VulkanQueue.cpp" />
     <ClCompile Include="Renderer\Backend\Vulkan\VulkanRendererBackend.cpp" />
     <ClCompile Include="Renderer\Backend\Vulkan\VulkanSurface.cpp" />
     <ClCompile Include="Renderer\Frontend\RendererFrontend.cpp" />

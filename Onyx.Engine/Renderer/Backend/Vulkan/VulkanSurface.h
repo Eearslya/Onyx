@@ -11,6 +11,8 @@ class VulkanSurface final {
   const bool Initialize(VkInstance instance, void* windowHandle);
   void Shutdown();
 
+  VkSurfaceKHR GetSurface() { return _surface; }
+
  private:
   VkInstance _instance;
   VkSurfaceKHR _surface;
