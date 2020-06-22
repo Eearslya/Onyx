@@ -3,11 +3,11 @@
 #include <vector>
 
 #include "Logger.h"
-#include "Renderer/Backend/Vulkan/VulkanPlatform.h"
+#include "Platform/VulkanPlatform.h"
 
 namespace Onyx {
 VulkanRendererBackend::VulkanRendererBackend(IApplication* application) {
-  Logger::Info("Creating Vulkan renderer backend...");
+  Logger::Trace("Creating Vulkan renderer backend...");
   _application = application;
 }
 
@@ -18,7 +18,7 @@ VulkanRendererBackend::~VulkanRendererBackend() {
 }
 
 const bool VulkanRendererBackend::Initialize(const bool enableValidation) {
-  Logger::Info("Initializing Vulkan renderer backend...");
+  Logger::Trace("Initializing Vulkan renderer backend...");
   _validationEnabled = enableValidation;
 
   CreateInstance();
@@ -28,7 +28,11 @@ const bool VulkanRendererBackend::Initialize(const bool enableValidation) {
 
 void VulkanRendererBackend::Shutdown() {}
 
-void VulkanRendererBackend::Destroy() { vkDestroyInstance(_instance, nullptr); }
+void VulkanRendererBackend::Destroy() {
+  if (_instance) {
+    vkDestroyInstance(_instance, nullptr);
+  }
+}
 
 const bool VulkanRendererBackend::PrepareFrame(const F32 deltaTime) {
   return false;

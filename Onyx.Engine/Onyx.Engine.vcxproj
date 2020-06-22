@@ -97,7 +97,7 @@
     <ClInclude Include="Platform\Windows\WindowsApplication.h" />
     <ClInclude Include="Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="Renderer\Backend\IRendererBackend.h" />
-    <ClInclude Include="Renderer\Backend\Vulkan\VulkanPlatform.h" />
+    <ClInclude Include="Platform\VulkanPlatform.h" />
     <ClInclude Include="Renderer\Backend\Vulkan\VulkanRendererBackend.h" />
     <ClInclude Include="Renderer\Frontend\RendererFrontend.h" />
     <ClInclude Include="Types.h" />
@@ -107,7 +107,7 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Platform\Windows\WindowsApplication.cpp" />
     <ClCompile Include="Platform\Windows\WindowsWindow.cpp" />
-    <ClCompile Include="Renderer\Backend\Vulkan\VulkanPlatform.cpp" />
+    <ClCompile Include="Platform\Windows\WindowsVulkanPlatform.cpp" />
     <ClCompile Include="Renderer\Backend\Vulkan\VulkanRendererBackend.cpp" />
     <ClCompile Include="Renderer\Frontend\RendererFrontend.cpp" />
   </ItemGroup>
