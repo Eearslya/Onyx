@@ -10,6 +10,7 @@ namespace Onyx {
 class IApplication;
 
 class VulkanDebugger;
+class VulkanSurface;
 
 class VulkanRendererBackend final : public IRendererBackend {
  public:
@@ -33,5 +34,6 @@ class VulkanRendererBackend final : public IRendererBackend {
   std::vector<const char*> _requiredLayers;
   VkInstance _instance = nullptr;
   VulkanDebugger* _debugger;
+  VulkanSurface* _surface;
 };
 }  // namespace Onyx

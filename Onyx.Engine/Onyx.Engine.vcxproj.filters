@@ -16,6 +16,7 @@
     <ClInclude Include="Renderer\Backend\Vulkan\VulkanRendererBackend.h" />
     <ClInclude Include="Platform\VulkanPlatform.h" />
     <ClInclude Include="Renderer\Backend\Vulkan\VulkanDebugger.h" />
+    <ClInclude Include="Renderer\Backend\Vulkan\VulkanSurface.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine.cpp" />
@@ -26,5 +27,6 @@
     <ClCompile Include="Renderer\Backend\Vulkan\VulkanRendererBackend.cpp" />
     <ClCompile Include="Platform\Windows\WindowsVulkanPlatform.cpp" />
     <ClCompile Include="Renderer\Backend\Vulkan\VulkanDebugger.cpp" />
+    <ClCompile Include="Renderer\Backend\Vulkan\VulkanSurface.cpp" />
   </ItemGroup>
 </Project>

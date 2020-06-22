@@ -4,9 +4,20 @@
 #include "Platform/VulkanPlatform.h"
 
 #ifdef PLATFORM_WINDOWS
-void Onyx::VulkanPlatform::CreateSurface(void* windowHandle,
-                                         VkInstance instance,
-                                         VkSurfaceKHR* outSurface) {}
+#include <windows.h>
+//
+#include <vulkan/vulkan_win32.h>
+
+VkSurfaceKHR Onyx::VulkanPlatform::CreateSurface(VkInstance instance,
+                                                 void* windowHandle) {
+  VkWin32SurfaceCreateInfoKHR surfaceCreateInfo{
+      VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR};
+  surfaceCreateInfo.hinstance = GetModuleHandle(nullptr);
+  surfaceCreateInfo.hwnd = (HWND)windowHandle;
+  VkSurfaceKHR surface;
+  vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
+  return surface;
+}
 
 void Onyx::VulkanPlatform::GetRequiredExtensions(
     std::vector<const char*>& requiredExtensions) {

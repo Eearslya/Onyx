@@ -7,8 +7,7 @@
 namespace Onyx {
 class VulkanPlatform {
  public:
-  static void CreateSurface(void* windowHandle, VkInstance instance,
-                            VkSurfaceKHR* outSurface);
+  static VkSurfaceKHR CreateSurface(VkInstance instance, void* windowHandle);
   static void GetRequiredExtensions(
       std::vector<const char*>& requiredExtensions);
 };

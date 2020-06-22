@@ -3,21 +3,29 @@
 #include <vector>
 
 #include "Logger.h"
+#include "Platform/IApplication.h"
+#include "Platform/IWindow.h"
 #include "Platform/VulkanPlatform.h"
 #include "Renderer/Backend/Vulkan/VulkanDebugger.h"
+#include "Renderer/Backend/Vulkan/VulkanSurface.h"
 
 namespace Onyx {
 VulkanRendererBackend::VulkanRendererBackend(IApplication* application) {
   Logger::Trace("Creating Vulkan renderer backend...");
   _application = application;
   _debugger = new VulkanDebugger();
+  _surface = new VulkanSurface();
 }
 
-VulkanRendererBackend::~VulkanRendererBackend() { delete _debugger; }
+VulkanRendererBackend::~VulkanRendererBackend() {
+  delete _surface;
+  delete _debugger;
+}
 
 const bool VulkanRendererBackend::Initialize(const bool enableValidation) {
   Logger::Trace("Initializing Vulkan renderer backend...");
   _validationEnabled = enableValidation;
+  IWindow* applicationWindow = _application->GetApplicationWindow();
 
   CreateInstance();
 
@@ -25,10 +33,16 @@ const bool VulkanRendererBackend::Initialize(const bool enableValidation) {
     _debugger->Initialize(_instance, VulkanDebugger::Level::WARNING);
   }
 
+  _surface->Initialize(_instance, applicationWindow->GetHandle());
+
   return false;
 }
 
 void VulkanRendererBackend::Shutdown() {
+  if (_surface) {
+    _surface->Shutdown();
+  }
+
   if (_validationEnabled) {
     if (_debugger) {
       _debugger->Shutdown();
