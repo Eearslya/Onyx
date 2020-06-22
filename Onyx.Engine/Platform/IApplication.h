@@ -10,6 +10,8 @@ class IWindow;
 class ONYX_API IApplication {
  public:
   virtual const bool Initialize() = 0;
+  virtual void Shutdown() = 0;
+
   virtual void Run() = 0;
   virtual void PumpMessages(const F32 deltaTime) = 0;
   virtual IWindow* CreateApplicationWindow(

@@ -17,6 +17,8 @@ class WindowsApplication final : public IApplication {
   ~WindowsApplication();
 
   const bool Initialize() override;
+  void Shutdown() override;
+
   void Run() override;
   void PumpMessages(const F32 deltaTime) override;
   I32 ProcessMessage(HWND hwnd, U32 msg, WPARAM wParam, LPARAM lParam);

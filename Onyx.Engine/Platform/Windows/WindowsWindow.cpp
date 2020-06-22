@@ -5,8 +5,8 @@ const wchar_t* WindowsWindow::ApplicationWindowClass = L"OnyxWindow";
 
 WindowsWindow::~WindowsWindow() {}
 
-void WindowsWindow::Initialize(IApplication* application,
-                               const WindowCreateInfo& createInfo) {
+const bool WindowsWindow::Initialize(IApplication* application,
+                                     const WindowCreateInfo& createInfo) {
   _createInfo = createInfo;
   U32 windowExStyle = 0;
   U32 windowStyle = 0;
@@ -54,8 +54,13 @@ void WindowsWindow::Initialize(IApplication* application,
   if (_handle == nullptr) {
     MessageBoxW(nullptr, TEXT("Window creation failed!"), TEXT("Error"),
                 MB_ICONEXCLAMATION | MB_OK);
+    return false;
   }
+
+  return true;
 }
+
+void WindowsWindow::Shutdown() {}
 
 void WindowsWindow::RequestClose() { _closeRequested = true; }
 

@@ -4,18 +4,16 @@
 
 #include "Logger.h"
 #include "Platform/VulkanPlatform.h"
+#include "Renderer/Backend/Vulkan/VulkanDebugger.h"
 
 namespace Onyx {
 VulkanRendererBackend::VulkanRendererBackend(IApplication* application) {
   Logger::Trace("Creating Vulkan renderer backend...");
   _application = application;
+  _debugger = new VulkanDebugger();
 }
 
-VulkanRendererBackend::~VulkanRendererBackend() {
-  if (_instance) {
-    Destroy();
-  }
-}
+VulkanRendererBackend::~VulkanRendererBackend() { delete _debugger; }
 
 const bool VulkanRendererBackend::Initialize(const bool enableValidation) {
   Logger::Trace("Initializing Vulkan renderer backend...");
@@ -23,12 +21,20 @@ const bool VulkanRendererBackend::Initialize(const bool enableValidation) {
 
   CreateInstance();
 
+  if (_validationEnabled) {
+    _debugger->Initialize(_instance, VulkanDebugger::Level::WARNING);
+  }
+
   return false;
 }
 
-void VulkanRendererBackend::Shutdown() {}
+void VulkanRendererBackend::Shutdown() {
+  if (_validationEnabled) {
+    if (_debugger) {
+      _debugger->Shutdown();
+    }
+  }
 
-void VulkanRendererBackend::Destroy() {
   if (_instance) {
     vkDestroyInstance(_instance, nullptr);
   }

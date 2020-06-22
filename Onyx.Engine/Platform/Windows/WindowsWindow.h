@@ -14,8 +14,10 @@ class WindowsWindow final : public IWindow {
  public:
   ~WindowsWindow();
 
-  void Initialize(IApplication* application,
-                  const WindowCreateInfo& createInfo) override;
+  const bool Initialize(IApplication* application,
+                        const WindowCreateInfo& createInfo) override;
+  void Shutdown() override;
+
   void RequestClose() override;
   void Show() override;
   void Hide() override;

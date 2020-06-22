@@ -9,6 +9,8 @@
 namespace Onyx {
 class IApplication;
 
+class VulkanDebugger;
+
 class VulkanRendererBackend final : public IRendererBackend {
  public:
   VulkanRendererBackend(IApplication* application);
@@ -16,7 +18,6 @@ class VulkanRendererBackend final : public IRendererBackend {
 
   const bool Initialize(const bool enableValidation) override;
   void Shutdown() override;
-  void Destroy() override;
   const bool PrepareFrame(const F32 deltaTime) override;
   const bool Frame(const F32 deltaTime) override;
 
@@ -31,5 +32,6 @@ class VulkanRendererBackend final : public IRendererBackend {
 
   std::vector<const char*> _requiredLayers;
   VkInstance _instance = nullptr;
+  VulkanDebugger* _debugger;
 };
 }  // namespace Onyx

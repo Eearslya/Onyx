@@ -19,4 +19,11 @@ const bool RendererFrontEnd::Initialize(Engine* engine) {
 
   return true;
 }
+
+void RendererFrontEnd::Shutdown() {
+  if (_backend) {
+    _backend->Shutdown();
+    delete _backend;
+  }
+}
 }  // namespace Onyx

@@ -50,10 +50,11 @@ struct WindowCreateInfo {
 
 class IWindow {
  public:
+  virtual const bool Initialize(IApplication* application,
+                                const WindowCreateInfo& createInfo) = 0;
+  virtual void Shutdown() = 0;
   virtual const Extent2D GetFramebufferExtent() const = 0;
   virtual void* GetHandle() = 0;
-  virtual void Initialize(IApplication* application,
-                          const WindowCreateInfo& createInfo) = 0;
   virtual void RequestClose() = 0;
   virtual void Show() = 0;
   virtual void Hide() = 0;

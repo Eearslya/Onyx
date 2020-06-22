@@ -58,7 +58,6 @@ const bool WindowsApplication::RegisterWindowClass(const HINSTANCE handle,
 
 WindowsApplication::~WindowsApplication() {
   if (_engine) {
-    _engine->Shutdown();
     delete _engine;
   }
   if (_mainWindow) {
@@ -69,6 +68,15 @@ WindowsApplication::~WindowsApplication() {
 const bool WindowsApplication::Initialize() {
   _engine = new Engine(this);
   return true;
+}
+
+void WindowsApplication::Shutdown() {
+  if (_engine) {
+    _engine->Shutdown();
+  }
+  if (_mainWindow) {
+    _mainWindow->Shutdown();
+  }
 }
 
 void WindowsApplication::Run() {
