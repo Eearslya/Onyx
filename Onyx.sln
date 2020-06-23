@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Onyx.Engine", "Onyx.Engine\Onyx.Engine.vcxproj", "{E0F70519-25FC-47A4-9B19-791BC4A5C236}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Onyx.Sandbox", "Onyx.Sandbox\Onyx.Sandbox.vcxproj", "{6CBAFD50-E980-4405-A5BC-2FB08EA93B91}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2F6EB7D9-F660-4DC8-A1DB-D8DC24B4EDC4}"
+	ProjectSection(SolutionItems) = preProject
+		.clang-format = .clang-format
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E0F70519-25FC-47A4-9B19-791BC4A5C236}.Debug|x64.ActiveCfg = Debug|x64
+		{E0F70519-25FC-47A4-9B19-791BC4A5C236}.Debug|x64.Build.0 = Debug|x64
+		{E0F70519-25FC-47A4-9B19-791BC4A5C236}.Release|x64.ActiveCfg = Release|x64
+		{E0F70519-25FC-47A4-9B19-791BC4A5C236}.Release|x64.Build.0 = Release|x64
+		{6CBAFD50-E980-4405-A5BC-2FB08EA93B91}.Debug|x64.ActiveCfg = Debug|x64
+		{6CBAFD50-E980-4405-A5BC-2FB08EA93B91}.Debug|x64.Build.0 = Debug|x64
+		{6CBAFD50-E980-4405-A5BC-2FB08EA93B91}.Release|x64.ActiveCfg = Release|x64
+		{6CBAFD50-E980-4405-A5BC-2FB08EA93B91}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D5B655ED-1D5C-4736-A814-044285406F32}
+	EndGlobalSection
+EndGlobal

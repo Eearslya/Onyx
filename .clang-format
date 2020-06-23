@@ -1,0 +1,21 @@
+BasedOnStyle: Google
+Language: Cpp
+
+IndentWidth: 2
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^"pch.h"'
+    Priority: -1
+  - Regex: '^"Core/Defines.h"'
+    Priority: 1
+  - Regex: '^"Core/Types.h"'
+    Priority: 1
+  - Regex: '^<.*\.h>'
+    Priority: 2
+  - Regex: '^<.*>'
+    Priority: 3
+  - Regex: '.*'
+    Priority: 4
