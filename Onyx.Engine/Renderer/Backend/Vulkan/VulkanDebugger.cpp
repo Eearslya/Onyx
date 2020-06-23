@@ -29,25 +29,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebuggerCallback(
 const bool VulkanDebugger::Initialize(VkInstance instance, Level level) {
   _instance = instance;
 
-  U32 severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-  if (level >= Level::WARNING) {
-    severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-  }
-  if (level >= Level::INFO) {
-    severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
-  }
-  if (level >= Level::TRACE) {
-    severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
-  }
-
-  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{
-      VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-  debugCreateInfo.messageSeverity = severity;
-  debugCreateInfo.messageType =
-      VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-      VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
-      VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-  debugCreateInfo.pfnUserCallback = VulkanDebuggerCallback;
+  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = GetCreateInfo(level);
   debugCreateInfo.pUserData = this;
 
   static PFN_vkCreateDebugUtilsMessengerEXT func =
@@ -70,5 +52,29 @@ void VulkanDebugger::Shutdown() {
     _instance = nullptr;
     _debugMessenger = nullptr;
   }
+}
+
+VkDebugUtilsMessengerCreateInfoEXT VulkanDebugger::GetCreateInfo(Level level) {
+  U32 severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+  if (level >= Level::WARNING) {
+    severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+  }
+  if (level >= Level::INFO) {
+    severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+  }
+  if (level >= Level::TRACE) {
+    severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+  }
+
+  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{
+      VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
+  debugCreateInfo.messageSeverity = severity;
+  debugCreateInfo.messageType =
+      VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+      VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
+      VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+  debugCreateInfo.pfnUserCallback = VulkanDebuggerCallback;
+
+  return debugCreateInfo;
 }
 }  // namespace Onyx

@@ -38,8 +38,9 @@ const bool VulkanRendererBackend::Initialize(const bool enableValidation) {
   IWindow* applicationWindow = _application->GetApplicationWindow();
   _surface->Initialize(_instance, applicationWindow->GetHandle());
 
+  Extent2D extent = applicationWindow->GetFramebufferExtent();
   _device->Initialize(_instance, _validationEnabled, _requiredLayers, _surface);
-  _device->SetFramebufferSize(applicationWindow->GetFramebufferExtent());
+  _device->SetFramebufferSize(extent);
 
   return false;
 }
@@ -120,6 +121,10 @@ void VulkanRendererBackend::CreateInstance() {
     instanceCreateInfo.enabledLayerCount =
         static_cast<uint32_t>(_requiredLayers.size());
     instanceCreateInfo.ppEnabledLayerNames = _requiredLayers.data();
+
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo =
+        VulkanDebugger::GetCreateInfo(VulkanDebugger::Level::WARNING);
+    instanceCreateInfo.pNext = &debugCreateInfo;
   } else {
     instanceCreateInfo.enabledLayerCount = 0;
     instanceCreateInfo.ppEnabledLayerNames = nullptr;
