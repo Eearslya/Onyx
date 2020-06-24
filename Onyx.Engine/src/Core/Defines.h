@@ -11,6 +11,13 @@
 #error "Unsupported or unknown build platform!"
 #endif
 
+// Determine our debug level
+#define ONYX_TRACE
+
+#ifdef _DEBUG
+#define ONYX_DEBUG
+#endif
+
 // Set up our platform-specific macros
 #ifdef ONYX_PLATFORM_WINDOWS
 #define FORCEINLINE __forceinline
@@ -57,7 +64,7 @@
 
 #define ASSERT(expr) ASSERT_MSG(expr, "")
 
-#ifdef _DEBUG
+#ifdef ONYX_DEBUG
 #define ASSERT_DEBUG(expr) ASSERT(expr)
 #define ASSERT_DEBUG_MSG(expr, msg) ASSERT_MSG(expr, msg)
 #else

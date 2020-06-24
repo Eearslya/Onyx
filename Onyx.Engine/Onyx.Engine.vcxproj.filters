@@ -12,6 +12,10 @@
     <ClInclude Include="src\Core\Logger.h" />
     <ClInclude Include="src\Core\Engine.h" />
     <ClInclude Include="src\Renderer\Renderer.h" />
+    <ClInclude Include="src\Renderer\IRendererBackend.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanRendererBackend.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanUtilities.h" />
+    <ClInclude Include="src\Platform\VulkanPlatform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Platform\Windows\WindowsApplication.cpp" />
@@ -20,5 +24,7 @@
     <ClCompile Include="src\Core\Logger.cpp" />
     <ClCompile Include="src\Core\Engine.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanRendererBackend.cpp" />
+    <ClCompile Include="src\Platform\Windows\WindowsVulkanPlatform.cpp" />
   </ItemGroup>
 </Project>

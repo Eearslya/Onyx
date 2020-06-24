@@ -9,7 +9,9 @@ namespace Onyx {
 static const char* LogLevelNames[] = {"FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
 static char LogBuffer[8192];
 
-#ifdef _DEBUG
+#ifdef ONYX_TRACE
+Logger::Level Logger::_logLevel = Logger::Level::TRACE;
+#elif ONYX_DEBUG
 Logger::Level Logger::_logLevel = Logger::Level::DEBUG;
 #else
 Logger::Level Logger::_logLevel = Logger::Level::WARN;
