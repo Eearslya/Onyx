@@ -4,6 +4,7 @@
 #include "Core/Types.h"
 
 namespace Onyx {
+namespace Platform {
 //! Generic Application interface, to be implemented on a per-platform basis.
 class ONYX_API IApplication {
  public:
@@ -26,6 +27,7 @@ class ONYX_API IApplication {
   //! The name of our application.
   const wchar_t* _applicationName;
 };
+}  // namespace Platform
 
 //! Factory class to create our platform-specific Application.
 class ONYX_API Application final {
@@ -35,12 +37,12 @@ class ONYX_API Application final {
     \param applicationName The name of the application.
     \return A pointer to the created application.
   */
-  static IApplication* CreateApplication(const wchar_t* applicationName);
+  static Platform::IApplication* CreateApplication(const wchar_t* applicationName);
   
   //! Destroy a created Application.
   /*!
     \param app A previously-created Application.
   */
-  static void DestroyApplication(IApplication* app);
+  static void DestroyApplication(Platform::IApplication* app);
 };
 }  // namespace Onyx

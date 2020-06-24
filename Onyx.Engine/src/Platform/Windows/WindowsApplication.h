@@ -8,6 +8,7 @@
 #include "Platform/IApplication.h"
 
 namespace Onyx {
+namespace Platform {
 class WindowsWindow;
 
 //! IApplication implementation for Windows.
@@ -28,4 +29,5 @@ class WindowsApplication final : public IApplication {
   HINSTANCE _hInstance;        //!< Our native application instance.
   WindowsWindow* _mainWindow;  //!< Our main Window.
 };
+}  // namespace Platform
 }  // namespace Onyx

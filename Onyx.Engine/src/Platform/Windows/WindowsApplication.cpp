@@ -7,14 +7,15 @@
 
 namespace Onyx {
 #ifdef ONYX_PLATFORM_WINDOWS
-IApplication* Application::CreateApplication(const wchar_t* applicationName) {
-  WindowsApplication* app = new WindowsApplication(applicationName);
+Platform::IApplication* Application::CreateApplication(const wchar_t* applicationName) {
+  Platform::WindowsApplication* app = new Platform::WindowsApplication(applicationName);
   return app;
 }
 
-void Application::DestroyApplication(IApplication* app) { delete app; }
+void Application::DestroyApplication(Platform::IApplication* app) { delete app; }
 #endif
 
+namespace Platform {
 WindowsApplication::WindowsApplication(const wchar_t* applicationName)
     : IApplication(applicationName) {
   _hInstance = GetModuleHandleW(nullptr);
@@ -36,7 +37,8 @@ WindowsApplication::~WindowsApplication() {}
 
 void WindowsApplication::Run() {
   while (!_mainWindow->CloseRequested()) {
-    _mainWindow->ProcessMessages(0.0f);
+    _mainWindow->ProcessMessages();
   }
 }
+}  // namespace Platform
 }  // namespace Onyx

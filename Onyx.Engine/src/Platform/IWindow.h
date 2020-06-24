@@ -4,6 +4,7 @@
 #include "Core/Types.h"
 
 namespace Onyx {
+namespace Platform {
 class IApplication;
 
 //! Struct to contain information about how to construct our window.
@@ -48,6 +49,7 @@ class IWindow {
    */
   virtual void* GetHandle() = 0;
 };
+}  // namespace Platform
 
 //! Factory class for creating and destroying our platform-specific windows.
 class ONYX_API Window final {
@@ -58,13 +60,13 @@ class ONYX_API Window final {
     \param createInfo A struct of settings determining how to create the window.
     \return A pointer to the created window.
   */
-  static IWindow* CreateApplicationWindow(IApplication* application,
-                                          const WindowCreateInfo& createInfo);
+  static Platform::IWindow* CreateApplicationWindow(Platform::IApplication* application,
+                                                    const Platform::WindowCreateInfo& createInfo);
 
   //! Destroy a created window.
   /*!
     \param window A pointer to a previously created window.
   */
-  static void DestroyApplicationWindow(IWindow* window);
+  static void DestroyApplicationWindow(Platform::IWindow* window);
 };
 }  // namespace Onyx

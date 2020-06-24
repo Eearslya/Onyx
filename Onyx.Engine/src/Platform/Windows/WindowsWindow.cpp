@@ -10,15 +10,17 @@
 
 namespace Onyx {
 #ifdef ONYX_PLATFORM_WINDOWS
-IWindow* Window::CreateApplicationWindow(IApplication* application,
-                                         const WindowCreateInfo& createInfo) {
-  WindowsWindow* window =
-      new WindowsWindow(static_cast<WindowsApplication*>(application), createInfo);
+Platform::IWindow* Window::CreateApplicationWindow(Platform::IApplication* application,
+                                                   const Platform::WindowCreateInfo& createInfo) {
+  Platform::WindowsWindow* window = new Platform::WindowsWindow(
+      static_cast<Platform::WindowsApplication*>(application), createInfo);
   return window;
 }
 
-void Window::DestroyApplicationWindow(IWindow* window) { delete window; }
+void Window::DestroyApplicationWindow(Platform::IWindow* window) { delete window; }
 #endif
+
+namespace Platform {
 
 //! Indicates whether we've registered our window class.
 bool WindowsWindow::_classRegistered = false;
@@ -129,4 +131,5 @@ void WindowsWindow::RegisterWindowClass(HINSTANCE instance) {
 
   _classRegistered = true;
 }
+}  // namespace Platform
 }  // namespace Onyx

@@ -8,6 +8,7 @@
 #include "Platform/IWindow.h"
 
 namespace Onyx {
+namespace Platform {
 class WindowsApplication;
 
 //! IWindow implementation for Windows.
@@ -50,4 +51,5 @@ class WindowsWindow final : public IWindow {
 
   static bool _classRegistered;
 };
+}  // namespace Platform
 }  // namespace Onyx
