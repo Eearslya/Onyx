@@ -12,27 +12,31 @@ namespace Onyx {
 #ifdef ONYX_PLATFORM_WINDOWS
 IWindow* Window::CreateApplicationWindow(IApplication* application,
                                          const WindowCreateInfo& createInfo) {
-  WindowsWindow* window = new WindowsWindow(
-      static_cast<WindowsApplication*>(application), createInfo);
+  WindowsWindow* window =
+      new WindowsWindow(static_cast<WindowsApplication*>(application), createInfo);
   return window;
 }
 
 void Window::DestroyApplicationWindow(IWindow* window) { delete window; }
 #endif
 
+//! Indicates whether we've registered our window class.
 bool WindowsWindow::_classRegistered = false;
+
+//! Name for our window class.
 const static wchar_t* WindowClassName = L"OnyxWindow";
+
+//! Our main window. Temporary global variable.
 // TODO: Allow for multiple windows. Requires more complex dispatch inside of
 // ApplicationWindowProcedure.
 WindowsWindow* MainWindow;
 
-LRESULT CALLBACK ApplicationWindowProcedure(HWND hwnd, U32 msg, WPARAM wParam,
-                                            LPARAM lParam) {
+//! Windows callback for message handling.
+LRESULT CALLBACK ApplicationWindowProcedure(HWND hwnd, U32 msg, WPARAM wParam, LPARAM lParam) {
   return MainWindow->ProcessMessage(hwnd, msg, wParam, lParam);
 }
 
-WindowsWindow::WindowsWindow(WindowsApplication* application,
-                             const WindowCreateInfo& createInfo)
+WindowsWindow::WindowsWindow(WindowsApplication* application, const WindowCreateInfo& createInfo)
     : IWindow(application, createInfo), _application(application) {
   // TODO: Keep a list of windows
   MainWindow = this;
@@ -63,20 +67,18 @@ WindowsWindow::WindowsWindow(WindowsApplication* application,
   windowW += borderRect.right - borderRect.left;
   windowH += borderRect.bottom - borderRect.top;
 
-  _hwnd = CreateWindowExW(windowExStyle, WindowClassName, createInfo.Title,
-                          windowStyle, windowX, windowY, windowW, windowH,
-                          nullptr, nullptr, appInstance, nullptr);
+  _hwnd = CreateWindowExW(windowExStyle, WindowClassName, createInfo.Title, windowStyle, windowX,
+                          windowY, windowW, windowH, nullptr, nullptr, appInstance, nullptr);
 
   if (_hwnd == nullptr) {
     DWORD errorCode = GetLastError();
-    MessageBoxW(NULL, TEXT("Window creation failed!"), TEXT("Error"),
-                MB_ICONEXCLAMATION | MB_OK);
+    MessageBoxW(NULL, TEXT("Window creation failed!"), TEXT("Error"), MB_ICONEXCLAMATION | MB_OK);
   }
 }
 
 WindowsWindow::~WindowsWindow() {}
 
-void WindowsWindow::ProcessMessages(const F32 deltaTime) {
+void WindowsWindow::ProcessMessages() {
   MSG message;
   while (PeekMessageW(&message, NULL, 0, 0, PM_REMOVE)) {
     TranslateMessage(&message);
@@ -84,8 +86,7 @@ void WindowsWindow::ProcessMessages(const F32 deltaTime) {
   }
 }
 
-LRESULT WindowsWindow::ProcessMessage(HWND hwnd, U32 msg, WPARAM wParam,
-                                      LPARAM lParam) {
+LRESULT WindowsWindow::ProcessMessage(HWND hwnd, U32 msg, WPARAM wParam, LPARAM lParam) {
   switch (msg) {
     case WM_ERASEBKGND:
       return 1;

@@ -10,12 +10,27 @@
 namespace Onyx {
 class WindowsApplication;
 
+//! IWindow implementation for Windows.
 class WindowsWindow final : public IWindow {
  public:
+  //! Construct a WindowsWindow.
+  /*!
+    \param application The application this window belongs to.
+    \param createInfo Various parameters to control window creation.
+  */
   WindowsWindow(WindowsApplication* application, const WindowCreateInfo& createInfo);
   ~WindowsWindow();
 
-  void ProcessMessages(const F32 deltaTime);
+  //! Process all window messages and dispatch them accordingly.
+  void ProcessMessages();
+
+  //! Handle a window message.
+  /*!
+    \param hwnd The native window handle.
+    \param msg The message type.
+    \param wParam The message's WPARAM.
+    \param lParam The message's LPARAM.
+  */
   LRESULT ProcessMessage(HWND hwnd, U32 msg, WPARAM wParam, LPARAM lParam);
 
   void Show() override;

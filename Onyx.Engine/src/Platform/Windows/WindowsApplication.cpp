@@ -28,8 +28,7 @@ WindowsApplication::WindowsApplication(const wchar_t* applicationName)
   createInfo.AllowMinimize = true;
   createInfo.Title = applicationName;
 
-  _mainWindow = static_cast<WindowsWindow*>(
-      Window::CreateApplicationWindow(this, createInfo));
+  _mainWindow = static_cast<WindowsWindow*>(Window::CreateApplicationWindow(this, createInfo));
   _mainWindow->Show();
 }
 

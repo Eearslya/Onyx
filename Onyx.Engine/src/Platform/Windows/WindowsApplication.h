@@ -10,8 +10,13 @@
 namespace Onyx {
 class WindowsWindow;
 
+//! IApplication implementation for Windows.
 class WindowsApplication final : public IApplication {
  public:
+  //! Construct a new WindowsApplication.
+  /*!
+    \param applicationName The name of the application.
+  */
   WindowsApplication(const wchar_t* applicationName);
   ~WindowsApplication();
 
@@ -20,7 +25,7 @@ class WindowsApplication final : public IApplication {
   void* GetHandle() override { return static_cast<void*>(_hInstance); }
 
  private:
-  HINSTANCE _hInstance;
-  WindowsWindow* _mainWindow;
+  HINSTANCE _hInstance;        //!< Our native application instance.
+  WindowsWindow* _mainWindow;  //!< Our main Window.
 };
 }  // namespace Onyx

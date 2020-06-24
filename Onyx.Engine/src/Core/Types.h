@@ -21,8 +21,9 @@ typedef double F64;
 typedef float F32;
 
 namespace Onyx {
+//! Struct that defines a 2D area.
 struct Extent2D {
-  U32 Width;
-  U32 Height;
+  U32 Width;   //!< Width of the 2D area.
+  U32 Height;  //!< Height of the 2D area.
 };
 }  // namespace Onyx
