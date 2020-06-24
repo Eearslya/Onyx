@@ -8,6 +8,8 @@
 #include "Platform/IApplication.h"
 
 namespace Onyx {
+class Engine;
+
 namespace Platform {
 class WindowsWindow;
 
@@ -28,6 +30,7 @@ class WindowsApplication final : public IApplication {
  private:
   HINSTANCE _hInstance;        //!< Our native application instance.
   WindowsWindow* _mainWindow;  //!< Our main Window.
+  Engine* _engine;             //!< The game engine attached to our application.
 };
 }  // namespace Platform
 }  // namespace Onyx

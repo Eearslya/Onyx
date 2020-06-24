@@ -10,11 +10,13 @@
     <ClInclude Include="src\Platform\IWindow.h" />
     <ClInclude Include="src\Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="src\Core\Logger.h" />
+    <ClInclude Include="src\Core\Engine.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Platform\Windows\WindowsApplication.cpp" />
     <ClCompile Include="src\pch.cpp" />
     <ClCompile Include="src\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="src\Core\Logger.cpp" />
+    <ClCompile Include="src\Core\Engine.cpp" />
   </ItemGroup>
 </Project>

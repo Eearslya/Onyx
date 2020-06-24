@@ -2,6 +2,7 @@
 
 #include "WindowsApplication.h"
 
+#include "Core/Engine.h"
 #include "Platform/IWindow.h"
 #include "Platform/Windows/WindowsWindow.h"
 
@@ -32,13 +33,17 @@ WindowsApplication::WindowsApplication(const wchar_t* applicationName)
 
   _mainWindow = static_cast<WindowsWindow*>(Window::CreateApplicationWindow(this, createInfo));
   _mainWindow->Show();
+
+  _engine = new Engine(this);
 }
 
-WindowsApplication::~WindowsApplication() {}
+WindowsApplication::~WindowsApplication() { delete _engine; }
 
 void WindowsApplication::Run() {
   while (!_mainWindow->CloseRequested()) {
     _mainWindow->ProcessMessages();
+
+    _engine->OnLoop();
   }
 }
 }  // namespace Platform
