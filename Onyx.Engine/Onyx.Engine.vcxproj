@@ -107,6 +107,7 @@
     <ClInclude Include="src\Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="src\Renderer\IRendererBackend.h" />
     <ClInclude Include="src\Renderer\Renderer.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanDebugger.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanRendererBackend.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanUtilities.h" />
   </ItemGroup>
@@ -121,6 +122,7 @@
     <ClCompile Include="src\Platform\Windows\WindowsVulkanPlatform.cpp" />
     <ClCompile Include="src\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanDebugger.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanRendererBackend.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

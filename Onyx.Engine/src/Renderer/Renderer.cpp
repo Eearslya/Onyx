@@ -16,7 +16,10 @@ const bool Renderer::Initialize(Engine* engine) {
   return true;
 }
 
-void Renderer::Shutdown() { _engine = nullptr; }
+void Renderer::Shutdown() {
+  delete _backend;
+  _engine = nullptr;
+}
 
 const bool Renderer::Frame() { return true; }
 }  // namespace Onyx

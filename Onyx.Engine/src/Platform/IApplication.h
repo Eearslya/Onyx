@@ -8,6 +8,8 @@ namespace Platform {
 //! Generic Application interface, to be implemented on a per-platform basis.
 class ONYX_API IApplication {
  public:
+  virtual ~IApplication() = default;
+
   //! Initialize our application interface.
   /*!
     \param applicationName The name of the application.

@@ -27,6 +27,7 @@ class IWindow {
     \param createInfo A struct of settings determining how to create the window.
    */
   IWindow(IApplication* application, const WindowCreateInfo& createInfo) {}
+  virtual ~IWindow() = default;
 
   //! Show the window, bringing it to the foreground if possible.
   virtual void Show() = 0;

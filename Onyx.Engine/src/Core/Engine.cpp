@@ -10,7 +10,7 @@ Engine::Engine(Platform::IApplication* application) : _application(application) 
   }
 }
 
-Engine::~Engine() {}
+Engine::~Engine() { Renderer::Shutdown(); }
 
 void Engine::Run() {}
 

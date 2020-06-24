@@ -15,6 +15,8 @@ class IApplication;
 }
 
 namespace Vulkan {
+class VulkanDebugger;
+
 //! IRendererBackend implementation for Vulkan.
 class VulkanRendererBackend final : public IRendererBackend {
  public:
@@ -57,6 +59,7 @@ class VulkanRendererBackend final : public IRendererBackend {
   bool _validationEnabled;               //!< Whether validation is enabled or not.
 
   VkInstance _instance = VK_NULL_HANDLE;  //!< Our Vulkan instance.
+  VulkanDebugger* _debugger = nullptr;
 };
 }  // namespace Vulkan
 }  // namespace Onyx

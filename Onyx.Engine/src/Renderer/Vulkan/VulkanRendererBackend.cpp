@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Platform/VulkanPlatform.h"
+#include "Renderer/Vulkan/VulkanDebugger.h"
 #include "Renderer/Vulkan/VulkanUtilities.h"
 
 namespace Onyx {
@@ -20,9 +21,19 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
   if (!CreateInstance()) {
     Logger::Fatal("Failed to create Vulkan instance!");
   }
+
+  if (_validationEnabled) {
+    _debugger = new VulkanDebugger(_instance, VulkanDebugger::Level::WARNING);
+  }
 }
 
-VulkanRendererBackend::~VulkanRendererBackend() { DestroyInstance(); }
+VulkanRendererBackend::~VulkanRendererBackend() {
+  if (_validationEnabled) {
+    delete _debugger;
+  }
+
+  DestroyInstance();
+}
 
 const bool VulkanRendererBackend::CreateInstance() {
   // Check our Vulkan version and log it.
@@ -39,7 +50,7 @@ const bool VulkanRendererBackend::CreateInstance() {
   applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   applicationInfo.pEngineName = "Onyx";
   applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  applicationInfo.apiVersion = VK_VERSION_1_1;
+  applicationInfo.apiVersion = VK_API_VERSION_1_1;
 
   // Begin filling in our instance creation info.
   VkInstanceCreateInfo instanceCreateInfo{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
@@ -68,6 +79,12 @@ const bool VulkanRendererBackend::CreateInstance() {
   }
   instanceCreateInfo.enabledLayerCount = static_cast<U32>(requiredLayers.size());
   instanceCreateInfo.ppEnabledLayerNames = requiredLayers.data();
+
+  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+  if (_validationEnabled) {
+    debugCreateInfo = VulkanDebugger::GetCreateInfo(VulkanDebugger::Level::WARNING);
+    instanceCreateInfo.pNext = &debugCreateInfo;
+  }
 
   VK_CHECK(vkCreateInstance(&instanceCreateInfo, nullptr, &_instance));
 
