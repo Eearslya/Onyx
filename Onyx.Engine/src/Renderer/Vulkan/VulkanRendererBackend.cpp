@@ -5,8 +5,11 @@
 #include <set>
 #include <vector>
 
+#include "Platform/IApplication.h"
+#include "Platform/IWindow.h"
 #include "Platform/VulkanPlatform.h"
 #include "Renderer/Vulkan/VulkanDebugger.h"
+#include "Renderer/Vulkan/VulkanSurface.h"
 #include "Renderer/Vulkan/VulkanUtilities.h"
 
 namespace Onyx {
@@ -25,9 +28,14 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
   if (_validationEnabled) {
     _debugger = new VulkanDebugger(_instance, VulkanDebugger::Level::WARNING);
   }
+
+  Platform::IWindow* applicationWindow = _application->GetApplicationWindow();
+  _surface = new VulkanSurface(this, applicationWindow->GetHandle());
 }
 
 VulkanRendererBackend::~VulkanRendererBackend() {
+  delete _surface;
+
   if (_validationEnabled) {
     delete _debugger;
   }

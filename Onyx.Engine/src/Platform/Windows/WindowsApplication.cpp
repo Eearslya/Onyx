@@ -46,5 +46,7 @@ void WindowsApplication::Run() {
     _engine->OnLoop();
   }
 }
+
+IWindow* WindowsApplication::GetApplicationWindow() { return _mainWindow; }
 }  // namespace Platform
 }  // namespace Onyx

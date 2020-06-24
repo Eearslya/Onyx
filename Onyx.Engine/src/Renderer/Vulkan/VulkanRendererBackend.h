@@ -16,6 +16,7 @@ class IApplication;
 
 namespace Vulkan {
 class VulkanDebugger;
+class VulkanSurface;
 
 //! IRendererBackend implementation for Vulkan.
 class VulkanRendererBackend final : public IRendererBackend {
@@ -60,6 +61,7 @@ class VulkanRendererBackend final : public IRendererBackend {
 
   VkInstance _instance = VK_NULL_HANDLE;  //!< Our Vulkan instance.
   VulkanDebugger* _debugger = nullptr;
+  VulkanSurface* _surface = nullptr;
 };
 }  // namespace Vulkan
 }  // namespace Onyx

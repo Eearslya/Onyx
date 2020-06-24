@@ -5,6 +5,8 @@
 
 namespace Onyx {
 namespace Platform {
+class IWindow;
+
 //! Generic Application interface, to be implemented on a per-platform basis.
 class ONYX_API IApplication {
  public:
@@ -24,6 +26,12 @@ class ONYX_API IApplication {
     \return A pointer to the platform-specific handle for the application.
   */
   virtual void* GetHandle() = 0;
+
+  //! Return the application's main window.
+  /*!
+    \return A pointer to the platform-specific IWindow instance.
+  */
+  virtual IWindow* GetApplicationWindow() = 0;
 
  protected:
   //! The name of our application.

@@ -26,6 +26,7 @@ class WindowsApplication final : public IApplication {
   void Run() override;
 
   void* GetHandle() override { return static_cast<void*>(_hInstance); }
+  IWindow* GetApplicationWindow() override;
 
  private:
   HINSTANCE _hInstance;        //!< Our native application instance.
