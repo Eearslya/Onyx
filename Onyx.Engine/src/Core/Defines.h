@@ -3,16 +3,16 @@
 // Determine our build platform
 #if _WIN32 || _WIN64
 #define ONYX_PLATFORM_WINDOWS
-#elif __linux__
+#elif defined(__linux__)
 #define ONYX_PLATFORM_LINUX
-#elif __APPLE__
+#elif defined(__APPLE__)
 #define ONYX_PLATFORM_APPLE
 #else
 #error "Unsupported or unknown build platform!"
 #endif
 
 // Determine our debug level
-#define ONYX_TRACE
+//#define ONYX_TRACE
 
 #ifdef _DEBUG
 #define ONYX_DEBUG

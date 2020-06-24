@@ -9,7 +9,7 @@
 namespace Onyx {
 #ifdef ONYX_PLATFORM_WINDOWS
 Platform::IApplication* Application::CreateApplication(const wchar_t* applicationName) {
-  Logger::Debug("Initializing Windows application...");
+  Logger::Info("Initializing Windows application...");
   Platform::WindowsApplication* app = new Platform::WindowsApplication(applicationName);
   return app;
 }

@@ -11,10 +11,10 @@ static char LogBuffer[8192];
 
 #ifdef ONYX_TRACE
 Logger::Level Logger::_logLevel = Logger::Level::TRACE;
-#elif ONYX_DEBUG
+#elif defined(ONYX_DEBUG)
 Logger::Level Logger::_logLevel = Logger::Level::DEBUG;
 #else
-Logger::Level Logger::_logLevel = Logger::Level::WARN;
+Logger::Level Logger::_logLevel = Logger::Level::INFO;
 #endif
 
 void Logger::WriteLog(Logger::Level level, const char* message, va_list args) {

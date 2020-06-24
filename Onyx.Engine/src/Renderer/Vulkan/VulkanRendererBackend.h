@@ -16,6 +16,7 @@ class IApplication;
 
 namespace Vulkan {
 class VulkanDebugger;
+class VulkanDevice;
 class VulkanSurface;
 
 //! IRendererBackend implementation for Vulkan.
@@ -58,10 +59,14 @@ class VulkanRendererBackend final : public IRendererBackend {
 
   Platform::IApplication* _application;  //!< Our parent application.
   bool _validationEnabled;               //!< Whether validation is enabled or not.
+  std::vector<const char*>
+      _requiredExtensions;                   //!< A list of extensions required to run our renderer.
+  std::vector<const char*> _requiredLayers;  //!< A list of layers required to run our renderer.
 
   VkInstance _instance = VK_NULL_HANDLE;  //!< Our Vulkan instance.
-  VulkanDebugger* _debugger = nullptr;
-  VulkanSurface* _surface = nullptr;
+  VulkanDebugger* _debugger = nullptr;    //!< Our Vulkan debugger.
+  VulkanSurface* _surface = nullptr;      //!< Our drawing surface.
+  VulkanDevice* _device = nullptr;        //!< Our Vulkan device.
 };
 }  // namespace Vulkan
 }  // namespace Onyx

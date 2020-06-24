@@ -50,7 +50,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)build\$(Configuration)\$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)build\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -108,6 +108,7 @@
     <ClInclude Include="src\Renderer\IRendererBackend.h" />
     <ClInclude Include="src\Renderer\Renderer.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanDebugger.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanDevice.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanRendererBackend.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanSurface.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanUtilities.h" />
@@ -124,6 +125,7 @@
     <ClCompile Include="src\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanDebugger.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanDevice.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanRendererBackend.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanSurface.cpp" />
   </ItemGroup>

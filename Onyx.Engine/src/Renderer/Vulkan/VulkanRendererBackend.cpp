@@ -9,6 +9,7 @@
 #include "Platform/IWindow.h"
 #include "Platform/VulkanPlatform.h"
 #include "Renderer/Vulkan/VulkanDebugger.h"
+#include "Renderer/Vulkan/VulkanDevice.h"
 #include "Renderer/Vulkan/VulkanSurface.h"
 #include "Renderer/Vulkan/VulkanUtilities.h"
 
@@ -19,7 +20,7 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
     : IRendererBackend(application, enableValidation),
       _application(application),
       _validationEnabled(enableValidation) {
-  Logger::Debug("Initializing Vulkan renderer...");
+  Logger::Info("Initializing Vulkan renderer...");
 
   if (!CreateInstance()) {
     Logger::Fatal("Failed to create Vulkan instance!");
@@ -31,6 +32,8 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
 
   Platform::IWindow* applicationWindow = _application->GetApplicationWindow();
   _surface = new VulkanSurface(this, applicationWindow->GetHandle());
+
+  _device = new VulkanDevice(_instance, _validationEnabled, _requiredLayers, _surface);
 }
 
 VulkanRendererBackend::~VulkanRendererBackend() {
@@ -48,7 +51,7 @@ const bool VulkanRendererBackend::CreateInstance() {
   // TODO: Ensure Vulkan version is high enough to support our app.
   U32 vulkanVersion;
   VK_CHECK(vkEnumerateInstanceVersion(&vulkanVersion));
-  Logger::Trace("Vulkan Version %d.%d.%d", VK_VERSION_MAJOR(vulkanVersion),
+  Logger::Debug("Vulkan Version %d.%d.%d", VK_VERSION_MAJOR(vulkanVersion),
                 VK_VERSION_MINOR(vulkanVersion), VK_VERSION_PATCH(vulkanVersion));
 
   // Fill out basic information about our application.
@@ -66,27 +69,25 @@ const bool VulkanRendererBackend::CreateInstance() {
   instanceCreateInfo.pApplicationInfo = &applicationInfo;
 
   // Determine what instance extensions we require, and make sure they're available.
-  std::vector<const char*> requiredExtensions;
-  VulkanPlatform::GetRequiredExtensions(requiredExtensions);
-  if (!VerifyInstanceExtensions(requiredExtensions)) {
+  VulkanPlatform::GetRequiredExtensions(_requiredExtensions);
+  if (!VerifyInstanceExtensions(_requiredExtensions)) {
     Logger::Fatal("Vulkan Instance does not support required extensions!");
     return false;
   }
-  instanceCreateInfo.enabledExtensionCount = static_cast<U32>(requiredExtensions.size());
-  instanceCreateInfo.ppEnabledExtensionNames = requiredExtensions.data();
+  instanceCreateInfo.enabledExtensionCount = static_cast<U32>(_requiredExtensions.size());
+  instanceCreateInfo.ppEnabledExtensionNames = _requiredExtensions.data();
 
   // If we want validation layers, ensure we can use them.
-  std::vector<const char*> requiredLayers;
   if (_validationEnabled) {
-    requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
+    _requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
   }
 
-  if (!VerifyInstanceLayers(requiredLayers)) {
+  if (!VerifyInstanceLayers(_requiredLayers)) {
     Logger::Fatal("Vulkan Instance does not support required layers!");
     return false;
   }
-  instanceCreateInfo.enabledLayerCount = static_cast<U32>(requiredLayers.size());
-  instanceCreateInfo.ppEnabledLayerNames = requiredLayers.data();
+  instanceCreateInfo.enabledLayerCount = static_cast<U32>(_requiredLayers.size());
+  instanceCreateInfo.ppEnabledLayerNames = _requiredLayers.data();
 
   VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
   if (_validationEnabled) {

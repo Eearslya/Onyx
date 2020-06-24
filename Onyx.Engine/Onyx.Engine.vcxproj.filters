@@ -18,6 +18,7 @@
     <ClInclude Include="src\Platform\VulkanPlatform.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanDebugger.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanSurface.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanDevice.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Platform\Windows\WindowsApplication.cpp" />
@@ -30,5 +31,6 @@
     <ClCompile Include="src\Platform\Windows\WindowsVulkanPlatform.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanDebugger.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanSurface.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanDevice.cpp" />
   </ItemGroup>
 </Project>
