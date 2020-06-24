@@ -7,9 +7,12 @@
     <ClInclude Include="src\Core\Types.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\Onyx.h" />
+    <ClInclude Include="src\Platform\IWindow.h" />
+    <ClInclude Include="src\Platform\Windows\WindowsWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Platform\Windows\WindowsApplication.cpp" />
     <ClCompile Include="src\pch.cpp" />
+    <ClCompile Include="src\Platform\Windows\WindowsWindow.cpp" />
   </ItemGroup>
 </Project>
