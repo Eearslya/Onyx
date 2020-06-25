@@ -109,6 +109,7 @@
     <ClInclude Include="src\Renderer\Renderer.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanDebugger.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanDevice.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanPhysicalDevice.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanRendererBackend.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanSurface.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanUtilities.h" />
@@ -126,6 +127,7 @@
     <ClCompile Include="src\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanDebugger.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanPhysicalDevice.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanRendererBackend.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanSurface.cpp" />
   </ItemGroup>
