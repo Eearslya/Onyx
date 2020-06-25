@@ -112,6 +112,7 @@
     <ClInclude Include="src\Renderer\Vulkan\VulkanCommandPool.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanDebugger.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanDevice.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanFence.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanPhysicalDevice.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanPipeline.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanQueue.h" />
@@ -139,6 +140,7 @@
     <ClCompile Include="src\Renderer\Vulkan\VulkanCommandPool.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanDebugger.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanFence.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanPhysicalDevice.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanQueue.cpp" />

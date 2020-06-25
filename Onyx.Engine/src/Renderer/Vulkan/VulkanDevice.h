@@ -29,6 +29,9 @@ class VulkanDevice final {
                const std::vector<const char*> requiredLayers, VulkanSurface* surface);
   ~VulkanDevice();
 
+  //! Wait for the device to be idle.
+  void WaitIdle();
+
   //! Get our physical device.
   VkPhysicalDevice GetPhysicalDevice() { return _physicalDevice; }
 

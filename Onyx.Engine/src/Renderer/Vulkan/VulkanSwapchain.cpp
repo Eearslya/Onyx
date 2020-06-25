@@ -7,6 +7,7 @@
 #include "Renderer/Vulkan/VulkanDevice.h"
 #include "Renderer/Vulkan/VulkanPhysicalDevice.h"
 #include "Renderer/Vulkan/VulkanQueue.h"
+#include "Renderer/Vulkan/VulkanSemaphore.h"
 #include "Renderer/Vulkan/VulkanSurface.h"
 #include "Renderer/Vulkan/VulkanUtilities.h"
 
@@ -72,6 +73,25 @@ VulkanSwapchain::VulkanSwapchain(VulkanDevice* device, VulkanSurface* surface, V
 VulkanSwapchain::~VulkanSwapchain() {
   DestroyImageViews();
   vkDestroySwapchainKHR(_device->GetLogicalDevice(), _swapchain, nullptr);
+}
+
+void VulkanSwapchain::AcquireNextImage(VulkanSemaphore* completedSemaphore, U32* imageIndex) {
+  vkAcquireNextImageKHR(_device->GetLogicalDevice(), _swapchain, U64_MAX, completedSemaphore->GetSemaphore(),
+                        VK_NULL_HANDLE, imageIndex);
+}
+
+void VulkanSwapchain::Present(VulkanQueue* graphicsQueue, VulkanQueue* presentationQueue,
+                              std::vector<VkSemaphore> waitSemaphores, U32 imageIndex) {
+  VkSwapchainKHR swapChains[] = {_swapchain};
+  VkPresentInfoKHR presentInfo{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+  presentInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphores.size());
+  presentInfo.pWaitSemaphores = waitSemaphores.data();
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = swapChains;
+  presentInfo.pImageIndices = &imageIndex;
+  presentInfo.pResults = nullptr;
+
+  vkQueuePresentKHR(presentationQueue->GetQueue(), &presentInfo);
 }
 
 VkSurfaceFormatKHR VulkanSwapchain::ChooseImageFormat(

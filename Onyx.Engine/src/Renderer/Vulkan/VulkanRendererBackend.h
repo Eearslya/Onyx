@@ -18,6 +18,7 @@ namespace Vulkan {
 class VulkanCommandBuffer;
 class VulkanDebugger;
 class VulkanDevice;
+class VulkanFence;
 class VulkanRenderPass;
 class VulkanSemaphore;
 class VulkanShader;
@@ -78,10 +79,20 @@ class VulkanRendererBackend final : public IRendererBackend {
   VulkanSwapchain* _swapchain = nullptr;              //!< Our swapchain.
   VulkanRenderPass* _renderPass = nullptr;            //!< Our default render pass.
   std::vector<VulkanCommandBuffer*> _commandBuffers;  //!< Our command buffers.
-  VulkanSemaphore* _imageAvailableSemaphore;  //!< Signals when swapchain image is available.
-  VulkanSemaphore* _renderFinishedSemaphore;  //!< Signals when rendering complete.
+  std::vector<VulkanSemaphore*>
+      _imageAvailableSemaphores;  //!< Signals when swapchain image is available.
+  std::vector<VulkanSemaphore*> _renderFinishedSemaphores;  //!< Signals when rendering complete.
+  std::vector<VulkanFence*>
+      _inFlightFences;  //!< Fences to keep us from processing too many frames at once.
+  std::vector<VulkanFence*>
+      _imagesInFlight;  //!< Fences to keep us from using the same image at the same time.
+
+  U32 _currentImageIndex;  //!< Current index into our swapchain.
+  U32 _currentFrame;
 
   VulkanShader* _shader = nullptr;  //!< TEMPORARY Shader module.
+
+  static const U32 _maxFramesInFlight = 2;
 };
 }  // namespace Vulkan
 }  // namespace Onyx

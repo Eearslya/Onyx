@@ -27,8 +27,10 @@ void VulkanCommandBuffer::Begin() {
 
 void VulkanCommandBuffer::End() { VK_CHECK(vkEndCommandBuffer(_commandBuffer)); }
 
+void VulkanCommandBuffer::Reset() { vkResetCommandBuffer(_commandBuffer, 0); }
+
 void VulkanCommandBuffer::BeginRenderPass(VulkanRenderPass* renderPass, VkFramebuffer framebuffer) {
-  VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+  VkClearValue clearColor = {0.0f, 0.0f, 1.0f, 1.0f};
   VkRenderPassBeginInfo renderPassBeginInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
   renderPassBeginInfo.renderPass = renderPass->GetRenderPass();
   renderPassBeginInfo.framebuffer = framebuffer;

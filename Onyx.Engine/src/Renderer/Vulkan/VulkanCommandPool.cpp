@@ -35,7 +35,9 @@ VulkanCommandPool::~VulkanCommandPool() {
 
 VulkanCommandBuffer* VulkanCommandPool::AllocateCommandBuffer(const bool primary) {
   // TODO: Command buffer recycling
-  return new VulkanCommandBuffer(_device, this);
+  VulkanCommandBuffer* buffer = new VulkanCommandBuffer(_device, this);
+  buffer->Allocate(primary);
+  return buffer;
 }
 
 void VulkanCommandPool::FreeCommandBuffer(VulkanCommandBuffer* buffer) {

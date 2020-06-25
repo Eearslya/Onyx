@@ -56,6 +56,9 @@ class VulkanShader final {
                bool hasCompute = false);
   ~VulkanShader();
 
+  //! Get our pipeline handle.
+  VulkanPipeline* GetPipeline() { return _pipeline; }
+
   //! Indicates whether this shader has a Vertex stage.
   const bool HasVertexStage() const { return _vertexShader != nullptr; }
 

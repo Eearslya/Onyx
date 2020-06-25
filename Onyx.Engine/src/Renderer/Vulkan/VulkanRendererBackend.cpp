@@ -12,6 +12,8 @@
 #include "Renderer/Vulkan/VulkanCommandPool.h"
 #include "Renderer/Vulkan/VulkanDebugger.h"
 #include "Renderer/Vulkan/VulkanDevice.h"
+#include "Renderer/Vulkan/VulkanFence.h"
+#include "Renderer/Vulkan/VulkanQueue.h"
 #include "Renderer/Vulkan/VulkanRenderPass.h"
 #include "Renderer/Vulkan/VulkanSemaphore.h"
 #include "Renderer/Vulkan/VulkanShader.h"
@@ -50,17 +52,32 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
 
   U32 imageCount = _swapchain->GetImageCount();
   _commandBuffers.resize(imageCount);
+  _imageAvailableSemaphores.resize(imageCount);
+  _renderFinishedSemaphores.resize(imageCount);
+  _inFlightFences.resize(imageCount);
+  _imagesInFlight.resize(imageCount);
   for (U32 i = 0; i < imageCount; i++) {
     _commandBuffers[i] = _device->GetGraphicsCommandPool()->AllocateCommandBuffer(true);
+    _imageAvailableSemaphores[i] = new VulkanSemaphore(_device);
+    _renderFinishedSemaphores[i] = new VulkanSemaphore(_device);
+    _inFlightFences[i] = new VulkanFence(_device, true);
   }
-
-  _imageAvailableSemaphore = new VulkanSemaphore(_device);
-  _renderFinishedSemaphore = new VulkanSemaphore(_device);
 }
 
 VulkanRendererBackend::~VulkanRendererBackend() {
-  delete _renderFinishedSemaphore;
-  delete _imageAvailableSemaphore;
+  if (_device) {
+    _device->WaitIdle();
+  }
+
+  for (VulkanFence* fence : _inFlightFences) {
+    delete fence;
+  }
+  for (VulkanSemaphore* semaphore : _imageAvailableSemaphores) {
+    delete semaphore;
+  }
+  for (VulkanSemaphore* semaphore : _renderFinishedSemaphores) {
+    delete semaphore;
+  }
   for (VulkanCommandBuffer* buffer : _commandBuffers) {
     _device->GetGraphicsCommandPool()->FreeCommandBuffer(buffer);
   }
@@ -77,9 +94,45 @@ VulkanRendererBackend::~VulkanRendererBackend() {
   DestroyInstance();
 }
 
-const bool VulkanRendererBackend::PrepareFrame() { return false; }
+const bool VulkanRendererBackend::PrepareFrame() {
+  _inFlightFences[_currentFrame]->Wait();
 
-const bool VulkanRendererBackend::Frame() { return false; }
+  _swapchain->AcquireNextImage(_imageAvailableSemaphores[_currentFrame], &_currentImageIndex);
+  
+  if (_imagesInFlight[_currentImageIndex] != nullptr) {
+    _imagesInFlight[_currentImageIndex]->Wait();
+  }
+  _imagesInFlight[_currentImageIndex] = _inFlightFences[_currentFrame];
+  
+  VulkanCommandBuffer* cmdBuf = _commandBuffers[_currentImageIndex];
+  cmdBuf->Reset();
+  cmdBuf->Begin();
+  cmdBuf->BeginRenderPass(_renderPass, _renderPass->GetFramebuffer(_currentImageIndex));
+  cmdBuf->BindPipeline(_shader->GetPipeline());
+  cmdBuf->Draw(3, 1, 0, 1);
+  cmdBuf->EndRenderPass();
+  cmdBuf->End();
+
+  return true;
+}
+
+const bool VulkanRendererBackend::Frame() {
+  VulkanCommandBuffer* cmdBuf = _commandBuffers[_currentImageIndex];
+
+  _inFlightFences[_currentFrame]->Reset();
+  
+  _device->GetGraphicsQueue()->Submit(
+      cmdBuf, {_imageAvailableSemaphores[_currentFrame]->GetSemaphore()},
+      {_renderFinishedSemaphores[_currentFrame]->GetSemaphore()}, _inFlightFences[_currentFrame]->GetFence());
+  
+  _swapchain->Present(_device->GetGraphicsQueue(), _device->GetPresentQueue(),
+                      {_renderFinishedSemaphores[_currentFrame]->GetSemaphore()},
+                      _currentImageIndex);
+
+  _currentFrame = (_currentFrame + 1) % _maxFramesInFlight;
+
+  return true;
+}
 
 const bool VulkanRendererBackend::CreateInstance() {
   // Check our Vulkan version and log it.

@@ -38,6 +38,8 @@ VulkanDevice::~VulkanDevice() {
   DestroyLogicalDevice();
 }
 
+void VulkanDevice::WaitIdle() { vkDeviceWaitIdle(_device); }
+
 const bool VulkanDevice::CreateLogicalDevice(const std::vector<const char*> requiredLayers) {
   // Use a set to automatically remove any duplicates.
   std::set<U32> indices;

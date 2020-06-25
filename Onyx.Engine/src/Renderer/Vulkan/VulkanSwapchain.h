@@ -10,6 +10,8 @@
 namespace Onyx {
 namespace Vulkan {
 class VulkanDevice;
+class VulkanQueue;
+class VulkanSemaphore;
 class VulkanSurface;
 
 struct VulkanSwapchainSupport;
@@ -25,6 +27,13 @@ class VulkanSwapchain final {
   */
   VulkanSwapchain(VulkanDevice* device, VulkanSurface* surface, VkExtent2D extent);
   ~VulkanSwapchain();
+
+  //! Get our next image for drawing.
+  void AcquireNextImage(VulkanSemaphore* completedSemaphore, U32* imageIndex);
+
+  //! Present our next image.
+  void Present(VulkanQueue* graphicsQueue, VulkanQueue* presentationQueue,
+               std::vector<VkSemaphore> waitSemaphores, U32 imageIndex);
 
   //! Get our chosen image format.
   VkSurfaceFormatKHR GetImageFormat() { return _imageFormat; }

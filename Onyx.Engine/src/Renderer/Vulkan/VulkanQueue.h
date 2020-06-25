@@ -5,8 +5,11 @@
 
 #include <vulkan/vulkan.h>
 
+#include <vector>
+
 namespace Onyx {
 namespace Vulkan {
+class VulkanCommandBuffer;
 class VulkanDevice;
 
 //! Represents a Vulkan device's command queue.
@@ -19,6 +22,13 @@ class VulkanQueue final {
   */
   VulkanQueue(VulkanDevice* device, U32 index);
   ~VulkanQueue() = default;
+
+  //! Submit a command buffer to be processed.
+  void Submit(VulkanCommandBuffer* buffer, std::vector<VkSemaphore> waitSemaphores,
+              std::vector<VkSemaphore> signalSemaphores, VkFence signalFence = VK_NULL_HANDLE);
+
+  //! Wait for our queue to be idle.
+  void WaitIdle();
 
   //! Get our VkQueue handle.
   VkQueue GetQueue() { return _queue; }

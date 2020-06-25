@@ -11,6 +11,7 @@ class VulkanCommandPool;
 class VulkanDevice;
 class VulkanPipeline;
 class VulkanRenderPass;
+class VulkanSemaphore;
 
 //! Represents a Vulkan command buffer.
 class VulkanCommandBuffer final {
@@ -29,6 +30,8 @@ class VulkanCommandBuffer final {
   //! vkEndCommandBuffer
   void End();
 
+  void Reset();
+
   //! vkCmdBeginRenderPass
   void BeginRenderPass(VulkanRenderPass* renderPass, VkFramebuffer framebuffer);
 
@@ -46,6 +49,9 @@ class VulkanCommandBuffer final {
 
   //! Free our command buffer.
   void Free();
+
+  //! Get our command buffer handle.
+  VkCommandBuffer GetCommandBuffer() { return _commandBuffer; }
 
  private:
   VulkanDevice* _device;           //!< Our parent device.
