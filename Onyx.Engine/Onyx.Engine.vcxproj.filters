@@ -20,6 +20,7 @@
     <ClInclude Include="src\Renderer\Vulkan\VulkanSurface.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanPhysicalDevice.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanDevice.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanQueue.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Platform\Windows\WindowsApplication.cpp" />
@@ -34,5 +35,6 @@
     <ClCompile Include="src\Renderer\Vulkan\VulkanSurface.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanPhysicalDevice.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanQueue.cpp" />
   </ItemGroup>
 </Project>

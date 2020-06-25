@@ -11,6 +11,7 @@
 
 namespace Onyx {
 namespace Vulkan {
+class VulkanQueue;
 class VulkanSurface;
 
 //! Represents the Vulkan logical device.
@@ -27,9 +28,24 @@ class VulkanDevice final {
                const std::vector<const char*> requiredLayers, VulkanSurface* surface);
   ~VulkanDevice();
 
+  //! Get our physical device.
+  VkPhysicalDevice GetPhysicalDevice() { return _physicalDevice; }
+
+  //! Get our logical device.
+  VkDevice GetLogicalDevice() { return _device; }
+
  private:
   //! Create our logical Vulkan device.
   const bool CreateLogicalDevice(const std::vector<const char*> requiredLayers);
+
+  //! Fetch our Queue objects.
+  void GetQueues();
+
+  //! Destroy and free our Queue objects.
+  void DestroyQueues();
+
+  //! Destroy and free our logical Vulkan device.
+  void DestroyLogicalDevice();
 
   bool _validationEnabled;  //!< Indicates whether additional validation is enabled.
 
@@ -39,6 +55,11 @@ class VulkanDevice final {
   VulkanSurface* _surface;           //!< The drawing surface.
   VulkanPhysicalDeviceDetails
       _physicalDeviceDetails;  //!< Details relating to the selected Vulkan physical device.
+
+  VulkanQueue* _graphicsQueue;  //!< Our Graphics queue.
+  VulkanQueue* _presentQueue;   //!< Our Presentation queue.
+  VulkanQueue* _transferQueue;  //!< Our Transfer queue.
+  VulkanQueue* _computeQueue;   //!< Our Compute queue.
 
   static const std::vector<const char*>
       _requiredExtensions;  //!< A list of required extensions for our Vulkan devices.

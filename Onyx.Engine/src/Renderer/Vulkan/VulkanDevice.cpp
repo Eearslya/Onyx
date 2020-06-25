@@ -5,6 +5,7 @@
 #include <set>
 
 #include "Renderer/Vulkan/VulkanPhysicalDevice.h"
+#include "Renderer/Vulkan/VulkanQueue.h"
 #include "Renderer/Vulkan/VulkanUtilities.h"
 
 namespace Onyx {
@@ -15,7 +16,8 @@ const std::vector<const char*> VulkanDevice::_requiredExtensions = {
 VulkanDevice::VulkanDevice(VkInstance instance, const bool validationEnabled,
                            const std::vector<const char*> requiredLayers, VulkanSurface* surface)
     : _instance(instance), _validationEnabled(validationEnabled), _surface(surface) {
-  if (!VulkanPhysicalDevice::SelectPhysicalDevice(_instance, _surface, _requiredExtensions, _physicalDeviceDetails)) {
+  if (!VulkanPhysicalDevice::SelectPhysicalDevice(_instance, _surface, _requiredExtensions,
+                                                  _physicalDeviceDetails)) {
     Logger::Fatal("Failed to initialize logical device: No physical device selected.");
   }
   _physicalDevice = _physicalDeviceDetails.Device;
@@ -24,9 +26,14 @@ VulkanDevice::VulkanDevice(VkInstance instance, const bool validationEnabled,
   if (!CreateLogicalDevice(requiredLayers)) {
     Logger::Fatal("Failed to create logical device!");
   }
+
+  GetQueues();
 }
 
-VulkanDevice::~VulkanDevice() { vkDestroyDevice(_device, nullptr); }
+VulkanDevice::~VulkanDevice() {
+  DestroyQueues();
+  DestroyLogicalDevice();
+}
 
 const bool VulkanDevice::CreateLogicalDevice(const std::vector<const char*> requiredLayers) {
   // Use a set to automatically remove any duplicates.
@@ -68,5 +75,23 @@ const bool VulkanDevice::CreateLogicalDevice(const std::vector<const char*> requ
 
   return true;
 }
+
+void VulkanDevice::GetQueues() {
+  _graphicsQueue = new VulkanQueue(this, _physicalDeviceDetails.Queues.GraphicsQueue);
+  _presentQueue = new VulkanQueue(this, _physicalDeviceDetails.Queues.PresentQueue);
+  _transferQueue = new VulkanQueue(this, _physicalDeviceDetails.Queues.TransferQueue);
+  if (_physicalDeviceDetails.Queues.ComputeQueue != -1) {
+    _computeQueue = new VulkanQueue(this, _physicalDeviceDetails.Queues.ComputeQueue);
+  }
+}
+
+void VulkanDevice::DestroyQueues() {
+  delete _computeQueue;
+  delete _transferQueue;
+  delete _presentQueue;
+  delete _graphicsQueue;
+}
+
+void VulkanDevice::DestroyLogicalDevice() { vkDestroyDevice(_device, nullptr); }
 }  // namespace Vulkan
 }  // namespace Onyx
