@@ -37,6 +37,7 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
 }
 
 VulkanRendererBackend::~VulkanRendererBackend() {
+  delete _device;
   delete _surface;
 
   if (_validationEnabled) {

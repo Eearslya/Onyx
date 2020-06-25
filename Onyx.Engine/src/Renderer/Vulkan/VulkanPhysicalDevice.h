@@ -79,11 +79,13 @@ class VulkanPhysicalDevice final {
   /*!
     \param instance The Vulkan instance to create the device for.
     \param surface The VulkanSurface this device will draw to.
+    \param requiredExtensions A list of extensions the selected device must have.
     \param details An output parameter containing details of the found device.
     \return true upon finding a suitable physical device, false otherwise.
   */
   static const bool SelectPhysicalDevice(VkInstance instance, VulkanSurface* surface,
-                                         VulkanPhysicalDeviceDetails* details);
+                                         const std::vector<const char*>& requiredExtensions,
+                                         VulkanPhysicalDeviceDetails& details);
 
  private:
   //! Retrieve all relevant information about the given physical device.
@@ -103,17 +105,15 @@ class VulkanPhysicalDevice final {
                                     std::vector<std::string>& extensions);
 
   //! Verify a given physical device is capable of running our application's needs.
-  static const bool VerifyDeviceCapabilities(VulkanPhysicalDeviceDetails& details);
+  static const bool VerifyDeviceCapabilities(VulkanPhysicalDeviceDetails& details,
+                                             const std::vector<const char*>& requiredExtensions);
 
   //! Verify a given physical device has all of the given extensions.
   static const bool VerifyDeviceExtensions(VulkanPhysicalDeviceDetails& details,
-                                           const std::vector<std::string>& requiredExtensions);
+                                           const std::vector<const char*>& requiredExtensions);
 
   //! Log the details of a physical device to the console.
   static void DumpDeviceDetails(const VulkanPhysicalDeviceDetails& details);
-
-  static const std::vector<std::string>
-      _requiredExtensions;  //!< A list of required extensions for our Vulkan devices.
 };
 }  // namespace Vulkan
 }  // namespace Onyx

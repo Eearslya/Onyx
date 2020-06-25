@@ -28,13 +28,20 @@ class VulkanDevice final {
   ~VulkanDevice();
 
  private:
+  //! Create our logical Vulkan device.
+  const bool CreateLogicalDevice(const std::vector<const char*> requiredLayers);
+
   bool _validationEnabled;  //!< Indicates whether additional validation is enabled.
 
   VkInstance _instance;              //!< The parent Vulkan instance.
   VkPhysicalDevice _physicalDevice;  //!< The selected Vulkan physical device.
+  VkDevice _device;                  //!< Our logical device.
   VulkanSurface* _surface;           //!< The drawing surface.
   VulkanPhysicalDeviceDetails
       _physicalDeviceDetails;  //!< Details relating to the selected Vulkan physical device.
+
+  static const std::vector<const char*>
+      _requiredExtensions;  //!< A list of required extensions for our Vulkan devices.
 };
 }  // namespace Vulkan
 }  // namespace Onyx

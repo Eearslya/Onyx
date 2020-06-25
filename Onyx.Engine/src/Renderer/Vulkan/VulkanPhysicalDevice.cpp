@@ -9,11 +9,10 @@
 
 namespace Onyx {
 namespace Vulkan {
-const std::vector<std::string> VulkanPhysicalDevice::_requiredExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-const bool VulkanPhysicalDevice::SelectPhysicalDevice(VkInstance instance, VulkanSurface* surface,
-                                                      VulkanPhysicalDeviceDetails* details) {
+const bool VulkanPhysicalDevice::SelectPhysicalDevice(
+    VkInstance instance, VulkanSurface* surface, const std::vector<const char*>& requiredExtensions,
+    VulkanPhysicalDeviceDetails& details) {
   U32 physicalDeviceCount = 0;
   vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
   if (physicalDeviceCount == 0) {
@@ -28,11 +27,12 @@ const bool VulkanPhysicalDevice::SelectPhysicalDevice(VkInstance instance, Vulka
   std::vector<VulkanPhysicalDeviceDetails> physicalDeviceDetails(physicalDeviceCount);
   std::vector<VulkanPhysicalDeviceDetails*> candidateDevices;
   for (U32 i = 0; i < physicalDeviceCount; i++) {
+    physicalDeviceDetails[i].Device = physicalDevices[i];
     QueryDeviceDetails(physicalDevices[i], surface, physicalDeviceDetails[i]);
 #ifdef ONYX_TRACE
     DumpDeviceDetails(physicalDeviceDetails[i]);
 #endif
-    if (VerifyDeviceCapabilities(physicalDeviceDetails[i])) {
+    if (VerifyDeviceCapabilities(physicalDeviceDetails[i], requiredExtensions)) {
       candidateDevices.push_back(&physicalDeviceDetails[i]);
     }
   }
@@ -42,13 +42,13 @@ const bool VulkanPhysicalDevice::SelectPhysicalDevice(VkInstance instance, Vulka
     return false;
   }
 
-  memcpy(details, candidateDevices[0], sizeof(VulkanPhysicalDeviceDetails));
+  details = *candidateDevices[0];
 
   return true;
 }
 
 void VulkanPhysicalDevice::QueryDeviceDetails(VkPhysicalDevice physicalDevice,
-                                              VulkanSurface* surface, 
+                                              VulkanSurface* surface,
                                               VulkanPhysicalDeviceDetails& details) {
   vkGetPhysicalDeviceProperties(physicalDevice, &details.Properties);
   vkGetPhysicalDeviceFeatures(physicalDevice, &details.Features);
@@ -141,11 +141,12 @@ void VulkanPhysicalDevice::QueryDeviceExtensions(VkPhysicalDevice physicalDevice
   vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, properties.data());
 
   for (VkExtensionProperties& ext : properties) {
-    extensions.push_back(std::string(ext.extensionName));
+    extensions.emplace_back(ext.extensionName);
   }
 }
 
-const bool VulkanPhysicalDevice::VerifyDeviceCapabilities(VulkanPhysicalDeviceDetails& details) {
+const bool VulkanPhysicalDevice::VerifyDeviceCapabilities(
+    VulkanPhysicalDeviceDetails& details, const std::vector<const char*>& requiredExtensions) {
   // Require a Graphics and Presentation queue.
   if (details.Queues.GraphicsQueue == -1 || details.Queues.PresentQueue == -1) {
     Logger::Debug("Rejecting device: Missing graphics or presentation queue.");
@@ -153,7 +154,7 @@ const bool VulkanPhysicalDevice::VerifyDeviceCapabilities(VulkanPhysicalDeviceDe
   }
 
   // Require all the necessary extensions.
-  if (!VerifyDeviceExtensions(details, _requiredExtensions)) {
+  if (!VerifyDeviceExtensions(details, requiredExtensions)) {
     Logger::Debug("Rejecting device: Missing required extensions.");
     return false;
   }
@@ -175,9 +176,9 @@ const bool VulkanPhysicalDevice::VerifyDeviceCapabilities(VulkanPhysicalDeviceDe
 }
 
 const bool VulkanPhysicalDevice::VerifyDeviceExtensions(
-    VulkanPhysicalDeviceDetails& details, const std::vector<std::string>& requiredExtensions) {
-  for (const std::string& ext : requiredExtensions) {
-    auto it = std::find(details.Extensions.begin(), details.Extensions.end(), ext);
+    VulkanPhysicalDeviceDetails& details, const std::vector<const char*>& requiredExtensions) {
+  for (const char* ext : requiredExtensions) {
+    auto it = std::find(details.Extensions.begin(), details.Extensions.end(), std::string(ext));
     if (it == details.Extensions.end()) {
       return false;
     }
