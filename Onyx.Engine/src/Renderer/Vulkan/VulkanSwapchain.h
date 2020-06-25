@@ -36,13 +36,21 @@ class VulkanSwapchain final {
   //! Retrieve and store references to our swapchain images.
   void GetImages();
 
-  VulkanDevice* _device;            //!< Our parent device.
-  VulkanSurface* _surface;          //!< Our parent surface.
-  VkExtent2D _extent;               //!< Our swapchain image size.
-  VkSurfaceFormatKHR _imageFormat;  //!< Our chosen image format.
-  VkPresentModeKHR _presentMode;    //!< Our chosen presentation mode.
-  VkSwapchainKHR _swapchain;        //!< A handle to our Vulkan swapchain object.
-  std::vector<VkImage> _images;     //!< A list of our swapchain images.
+  //! Create and store our swapchain image views.
+  void CreateImageViews();
+
+  //! Destroy and cleanup our swapchain image views.
+  void DestroyImageViews();
+
+  VulkanDevice* _device;                 //!< Our parent device.
+  VulkanSurface* _surface;               //!< Our parent surface.
+  VkExtent2D _extent;                    //!< Our swapchain image size.
+  VkSurfaceFormatKHR _imageFormat;       //!< Our chosen image format.
+  VkPresentModeKHR _presentMode;         //!< Our chosen presentation mode.
+  VkSwapchainKHR _swapchain;             //!< A handle to our Vulkan swapchain object.
+  U32 _imageCount;                       //!< How many images are in our swapchain.
+  std::vector<VkImage> _images;          //!< A list of our swapchain images.
+  std::vector<VkImageView> _imageViews;  //!< A list of our swapchain image views.
 };
 }  // namespace Vulkan
 }  // namespace Onyx

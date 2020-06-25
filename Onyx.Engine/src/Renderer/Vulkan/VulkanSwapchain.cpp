@@ -63,9 +63,11 @@ VulkanSwapchain::VulkanSwapchain(VulkanDevice* device, VulkanSurface* surface, V
                                 &_swapchain));
 
   GetImages();
+  CreateImageViews();
 }
 
 VulkanSwapchain::~VulkanSwapchain() {
+  DestroyImageViews();
   vkDestroySwapchainKHR(_device->GetLogicalDevice(), _swapchain, nullptr);
 }
 
@@ -91,10 +93,36 @@ VkPresentModeKHR VulkanSwapchain::ChoosePresentMode(
 }
 
 void VulkanSwapchain::GetImages() {
-  U32 imageCount = 0;
-  vkGetSwapchainImagesKHR(_device->GetLogicalDevice(), _swapchain, &imageCount, nullptr);
-  _images.resize(imageCount);
-  vkGetSwapchainImagesKHR(_device->GetLogicalDevice(), _swapchain, &imageCount, _images.data());
+  vkGetSwapchainImagesKHR(_device->GetLogicalDevice(), _swapchain, &_imageCount, nullptr);
+  _images.resize(_imageCount);
+  vkGetSwapchainImagesKHR(_device->GetLogicalDevice(), _swapchain, &_imageCount, _images.data());
+}
+
+void VulkanSwapchain::CreateImageViews() {
+  _imageViews.resize(_imageCount);
+  for (U32 i = 0; i < _imageCount; i++) {
+    VkImageViewCreateInfo createInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+    createInfo.image = _images[i];
+    createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    createInfo.format = _imageFormat.format;
+    createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    createInfo.subresourceRange.baseMipLevel = 0;
+    createInfo.subresourceRange.levelCount = 1;
+    createInfo.subresourceRange.baseArrayLayer = 0;
+    createInfo.subresourceRange.layerCount = 1;
+
+    VK_CHECK(vkCreateImageView(_device->GetLogicalDevice(), &createInfo, nullptr, &_imageViews[i]));
+  }
+}
+
+void VulkanSwapchain::DestroyImageViews() {
+  for (U32 i = 0; i < _imageCount; i++) {
+    vkDestroyImageView(_device->GetLogicalDevice(), _imageViews[i], nullptr);
+  }
 }
 }  // namespace Vulkan
 }  // namespace Onyx
