@@ -2,6 +2,7 @@
 
 #include "VulkanCommandPool.h"
 
+#include "Renderer/Vulkan/VulkanCommandBuffer.h"
 #include "Renderer/Vulkan/VulkanDevice.h"
 #include "Renderer/Vulkan/VulkanUtilities.h"
 
@@ -30,6 +31,16 @@ VulkanCommandPool::VulkanCommandPool(VulkanDevice* device, const U32 queueFamily
 
 VulkanCommandPool::~VulkanCommandPool() {
   vkDestroyCommandPool(_device->GetLogicalDevice(), _commandPool, nullptr);
+}
+
+VulkanCommandBuffer* VulkanCommandPool::AllocateCommandBuffer(const bool primary) {
+  // TODO: Command buffer recycling
+  return new VulkanCommandBuffer(_device, this);
+}
+
+void VulkanCommandPool::FreeCommandBuffer(VulkanCommandBuffer* buffer) {
+  // TODO: Command buffer recycling
+  delete buffer;
 }
 
 }  // namespace Vulkan

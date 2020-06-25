@@ -31,6 +31,9 @@ class VulkanPipeline final {
   VulkanPipeline(VulkanDevice* device, VulkanPipelineInfo pipelineInfo);
   ~VulkanPipeline();
 
+  //! Get our pipeline handle.
+  VkPipeline GetPipeline() { return _graphicsPipeline; }
+
  private:
   //! Create our Pipeline Layout.
   void CreateLayout();

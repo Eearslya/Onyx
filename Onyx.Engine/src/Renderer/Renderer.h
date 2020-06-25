@@ -23,6 +23,9 @@ class Renderer final {
   //! Shutdown our rendering API, cleaning up all used data.
   static void Shutdown();
 
+  //! Prepare to process a frame.
+  static const bool PrepareFrame();
+
   //! Process a single frame and draw it to the screen.
   /*!
     \return true if frame was drawn successfully, false otherwise.

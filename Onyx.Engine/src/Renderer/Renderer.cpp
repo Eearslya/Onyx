@@ -21,5 +21,7 @@ void Renderer::Shutdown() {
   _engine = nullptr;
 }
 
-const bool Renderer::Frame() { return true; }
+const bool Renderer::PrepareFrame() { return _backend->PrepareFrame(); }
+
+const bool Renderer::Frame() { return _backend->Frame(); }
 }  // namespace Onyx

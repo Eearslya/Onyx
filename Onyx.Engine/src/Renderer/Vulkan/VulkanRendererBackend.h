@@ -15,6 +15,7 @@ class IApplication;
 }
 
 namespace Vulkan {
+class VulkanCommandBuffer;
 class VulkanDebugger;
 class VulkanDevice;
 class VulkanRenderPass;
@@ -32,6 +33,9 @@ class VulkanRendererBackend final : public IRendererBackend {
   */
   VulkanRendererBackend(Platform::IApplication* application, const bool enableValidation);
   ~VulkanRendererBackend();
+
+  const bool PrepareFrame() override;
+  const bool Frame() override;
 
   const bool ValidationEnabled() const override { return _validationEnabled; }
 
@@ -66,12 +70,13 @@ class VulkanRendererBackend final : public IRendererBackend {
       _requiredExtensions;                   //!< A list of extensions required to run our renderer.
   std::vector<const char*> _requiredLayers;  //!< A list of layers required to run our renderer.
 
-  VkInstance _instance = VK_NULL_HANDLE;    //!< Our Vulkan instance.
-  VulkanDebugger* _debugger = nullptr;      //!< Our Vulkan debugger.
-  VulkanSurface* _surface = nullptr;        //!< Our drawing surface.
-  VulkanDevice* _device = nullptr;          //!< Our Vulkan device.
-  VulkanSwapchain* _swapchain = nullptr;    //!< Our swapchain.
-  VulkanRenderPass* _renderPass = nullptr;  //!< Our default render pass.
+  VkInstance _instance = VK_NULL_HANDLE;              //!< Our Vulkan instance.
+  VulkanDebugger* _debugger = nullptr;                //!< Our Vulkan debugger.
+  VulkanSurface* _surface = nullptr;                  //!< Our drawing surface.
+  VulkanDevice* _device = nullptr;                    //!< Our Vulkan device.
+  VulkanSwapchain* _swapchain = nullptr;              //!< Our swapchain.
+  VulkanRenderPass* _renderPass = nullptr;            //!< Our default render pass.
+  std::vector<VulkanCommandBuffer*> _commandBuffers;  //!< Our command buffers.
 
   VulkanShader* _shader = nullptr;  //!< TEMPORARY Shader module.
 };

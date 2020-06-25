@@ -108,6 +108,7 @@
     <ClInclude Include="src\Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="src\Renderer\IRendererBackend.h" />
     <ClInclude Include="src\Renderer\Renderer.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanCommandBuffer.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanCommandPool.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanDebugger.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanDevice.h" />
@@ -133,6 +134,7 @@
     <ClCompile Include="src\Platform\Windows\WindowsVulkanPlatform.cpp" />
     <ClCompile Include="src\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanCommandBuffer.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanCommandPool.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanDebugger.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanDevice.cpp" />

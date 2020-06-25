@@ -44,6 +44,9 @@ class VulkanDevice final {
   //! Get our Presentation queue.
   VulkanQueue* GetPresentQueue() { return _presentQueue; }
 
+  //! Get our graphics command pool.
+  VulkanCommandPool* GetGraphicsCommandPool() { return _graphicsCommandPool; }
+
  private:
   //! Create our logical Vulkan device.
   const bool CreateLogicalDevice(const std::vector<const char*> requiredLayers);

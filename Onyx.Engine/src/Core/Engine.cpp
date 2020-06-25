@@ -14,5 +14,8 @@ Engine::~Engine() { Renderer::Shutdown(); }
 
 void Engine::Run() {}
 
-const bool Engine::OnLoop() { return true; }
+const bool Engine::OnLoop() { 
+  Renderer::PrepareFrame();
+  Renderer::Frame();
+  return true; }
 }  // namespace Onyx

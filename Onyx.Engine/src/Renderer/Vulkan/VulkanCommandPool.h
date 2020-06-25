@@ -7,6 +7,7 @@
 
 namespace Onyx {
 namespace Vulkan {
+class VulkanCommandBuffer;
 class VulkanDevice;
 
 //! Represents a Vulkan command pool.
@@ -23,6 +24,15 @@ class VulkanCommandPool final {
   VulkanCommandPool(VulkanDevice* device, const U32 queueFamilyIndex, const bool buffersCanReset,
                     const bool buffersProtected, const bool transient);
   ~VulkanCommandPool();
+
+  //! Allocate and return a new buffer from this pool.
+  VulkanCommandBuffer* AllocateCommandBuffer(const bool primary);
+
+  //! Free a buffer allocated from this pool.
+  void FreeCommandBuffer(VulkanCommandBuffer* buffer);
+
+  //! Get our command pool handle.
+  VkCommandPool GetCommandPool() { return _commandPool; }
 
  private:
   VulkanDevice* _device;       //!< Our parent device.

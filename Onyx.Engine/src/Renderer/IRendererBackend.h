@@ -20,6 +20,12 @@ class IRendererBackend {
   IRendererBackend(Platform::IApplication* application, const bool enableValidation) {}
   virtual ~IRendererBackend() = default;
 
+  //! Prepare to draw a frame.
+  virtual const bool PrepareFrame() = 0;
+
+  //! Draw a frame.
+  virtual const bool Frame() = 0;
+
   //! Returns whether validation is enabled for this backend.
   /*!
     \return true if validation is enabled, false otherwise.

@@ -8,6 +8,8 @@
 #include "Platform/IApplication.h"
 #include "Platform/IWindow.h"
 #include "Platform/VulkanPlatform.h"
+#include "Renderer/Vulkan/VulkanCommandBuffer.h"
+#include "Renderer/Vulkan/VulkanCommandPool.h"
 #include "Renderer/Vulkan/VulkanDebugger.h"
 #include "Renderer/Vulkan/VulkanDevice.h"
 #include "Renderer/Vulkan/VulkanRenderPass.h"
@@ -44,9 +46,18 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
 
   _renderPass = new VulkanRenderPass(_device, _swapchain);
   _shader = new VulkanShader(_device, "Basic", _renderPass, true, true, false, false);
+
+  U32 imageCount = _swapchain->GetImageCount();
+  _commandBuffers.resize(imageCount);
+  for (U32 i = 0; i < imageCount; i++) {
+    _commandBuffers[i] = _device->GetGraphicsCommandPool()->AllocateCommandBuffer(true);
+  }
 }
 
 VulkanRendererBackend::~VulkanRendererBackend() {
+  for (VulkanCommandBuffer* buffer : _commandBuffers) {
+    _device->GetGraphicsCommandPool()->FreeCommandBuffer(buffer);
+  }
   delete _shader;
   delete _renderPass;
   delete _swapchain;
@@ -59,6 +70,10 @@ VulkanRendererBackend::~VulkanRendererBackend() {
 
   DestroyInstance();
 }
+
+const bool VulkanRendererBackend::PrepareFrame() { return false; }
+
+const bool VulkanRendererBackend::Frame() { return false; }
 
 const bool VulkanRendererBackend::CreateInstance() {
   // Check our Vulkan version and log it.
