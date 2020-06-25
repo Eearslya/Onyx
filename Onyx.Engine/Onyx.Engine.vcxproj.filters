@@ -25,6 +25,8 @@
     <ClInclude Include="src\Renderer\Vulkan\VulkanSwapchain.h" />
     <ClInclude Include="src\Core\FileUtils.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanShader.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanRenderPass.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanPipeline.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Platform\Windows\WindowsApplication.cpp" />
@@ -44,6 +46,8 @@
     <ClCompile Include="src\Renderer\Vulkan\VulkanSwapchain.cpp" />
     <ClCompile Include="src\Core\FileUtils.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanShader.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanPipeline.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanRenderPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\basic.vert" />

@@ -17,6 +17,7 @@ class IApplication;
 namespace Vulkan {
 class VulkanDebugger;
 class VulkanDevice;
+class VulkanRenderPass;
 class VulkanShader;
 class VulkanSurface;
 class VulkanSwapchain;
@@ -65,11 +66,12 @@ class VulkanRendererBackend final : public IRendererBackend {
       _requiredExtensions;                   //!< A list of extensions required to run our renderer.
   std::vector<const char*> _requiredLayers;  //!< A list of layers required to run our renderer.
 
-  VkInstance _instance = VK_NULL_HANDLE;  //!< Our Vulkan instance.
-  VulkanDebugger* _debugger = nullptr;    //!< Our Vulkan debugger.
-  VulkanSurface* _surface = nullptr;      //!< Our drawing surface.
-  VulkanDevice* _device = nullptr;        //!< Our Vulkan device.
-  VulkanSwapchain* _swapchain = nullptr;  //!< Our swapchain.
+  VkInstance _instance = VK_NULL_HANDLE;    //!< Our Vulkan instance.
+  VulkanDebugger* _debugger = nullptr;      //!< Our Vulkan debugger.
+  VulkanSurface* _surface = nullptr;        //!< Our drawing surface.
+  VulkanDevice* _device = nullptr;          //!< Our Vulkan device.
+  VulkanSwapchain* _swapchain = nullptr;    //!< Our swapchain.
+  VulkanRenderPass* _renderPass = nullptr;  //!< Our default render pass.
 
   VulkanShader* _shader = nullptr;  //!< TEMPORARY Shader module.
 };

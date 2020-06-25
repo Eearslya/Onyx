@@ -7,6 +7,8 @@
 
 #include "Core/FileUtils.h"
 #include "Renderer/Vulkan/VulkanDevice.h"
+#include "Renderer/Vulkan/VulkanPipeline.h"
+#include "Renderer/Vulkan/VulkanRenderPass.h"
 #include "Renderer/Vulkan/VulkanUtilities.h"
 
 namespace Onyx {
@@ -45,18 +47,26 @@ VulkanShaderModule::~VulkanShaderModule() {
   vkDestroyShaderModule(_device->GetLogicalDevice(), _shaderModule, nullptr);
 }
 
-VulkanShader::VulkanShader(VulkanDevice* device, const char* shaderName, bool hasVertex,
-                           bool hasFragment, bool hasGeometry, bool hasCompute)
+VulkanShader::VulkanShader(VulkanDevice* device, const char* shaderName,
+                           VulkanRenderPass* renderPass, bool hasVertex, bool hasFragment,
+                           bool hasGeometry, bool hasCompute)
     : _device(device),
       _shaderName(shaderName),
+      _renderPass(renderPass),
       _vertexShader(nullptr),
       _fragmentShader(nullptr),
       _geometryShader(nullptr),
       _computeShader(nullptr) {
+  _stageCount =
+      (hasVertex ? 1 : 0) + (hasFragment ? 1 : 0) + (hasGeometry ? 1 : 0) + (hasCompute ? 1 : 0);
   CreateModules(hasVertex, hasFragment, hasGeometry, hasCompute);
+  CreatePipeline();
 }
 
-VulkanShader::~VulkanShader() { DestroyModules(); }
+VulkanShader::~VulkanShader() {
+  DestroyPipeline();
+  DestroyModules();
+}
 
 void VulkanShader::CreateModules(bool hasVertex, bool hasFragment, bool hasGeometry,
                                  bool hasCompute) {
@@ -79,6 +89,30 @@ void VulkanShader::CreateModules(bool hasVertex, bool hasFragment, bool hasGeome
     _computeShader = new VulkanShaderModule(_device, source, ShaderStage::Compute);
   }
 }
+
+void VulkanShader::CreatePipeline() {
+  VulkanPipelineInfo info{};
+  info.Extent = _renderPass->GetExtent();
+  info.RenderPass = _renderPass;
+  info.ShaderStageInfos.reserve(_stageCount);
+
+  if (HasVertexStage()) {
+    info.ShaderStageInfos.push_back(_vertexShader->GetPipelineCreateInfo());
+  }
+  if (HasFragmentStage()) {
+    info.ShaderStageInfos.push_back(_fragmentShader->GetPipelineCreateInfo());
+  }
+  if (HasGeometryStage()) {
+    info.ShaderStageInfos.push_back(_geometryShader->GetPipelineCreateInfo());
+  }
+  if (HasComputeStage()) {
+    info.ShaderStageInfos.push_back(_computeShader->GetPipelineCreateInfo());
+  }
+
+  _pipeline = new VulkanPipeline(_device, info);
+}
+
+void VulkanShader::DestroyPipeline() { delete _pipeline; }
 
 void VulkanShader::DestroyModules() {
   delete _computeShader;

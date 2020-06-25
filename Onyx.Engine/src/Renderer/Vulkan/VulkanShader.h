@@ -10,6 +10,8 @@
 namespace Onyx {
 namespace Vulkan {
 class VulkanDevice;
+class VulkanPipeline;
+class VulkanRenderPass;
 
 //! Describes at which stage this shader module should be executed.
 enum class ShaderStage { Vertex = 0, Fragment, Geometry, Compute };
@@ -43,13 +45,15 @@ class VulkanShader final {
   /*!
     \param device The Vulkan device which owns this shader.
     \param shaderName The name of the shader to load.
+    \param renderPass The render pass which will use this shader.
     \param hasVertex Indicates whether this shader has a Vertex stage.
     \param hasFragment Indicates whether this shader has a Fragment stage.
     \param hasGeometry Indicates whether this shader has a Geometry stage.
     \param hasCompute Indicates whether this shader has a Compute stage.
   */
-  VulkanShader(VulkanDevice* device, const char* shaderName, bool hasVertex = true,
-               bool hasFragment = true, bool hasGeometry = false, bool hasCompute = false);
+  VulkanShader(VulkanDevice* device, const char* shaderName, VulkanRenderPass* renderPass,
+               bool hasVertex = true, bool hasFragment = true, bool hasGeometry = false,
+               bool hasCompute = false);
   ~VulkanShader();
 
   //! Indicates whether this shader has a Vertex stage.
@@ -68,15 +72,24 @@ class VulkanShader final {
   //! Create and store all of our shader modules.
   void CreateModules(bool hasVertex, bool hasFragment, bool hasGeometry, bool hasCompute);
 
+  //! Create and store our graphics pipeline.
+  void CreatePipeline();
+
+  //! Destroy and clean up our graphics pipeline.
+  void DestroyPipeline();
+
   //! Destroy and clean up all of our shader modules.
   void DestroyModules();
 
   VulkanDevice* _device;                //!< Our parent device.
   const char* _shaderName;              //!< Our shader name.
+  VulkanRenderPass* _renderPass;        //!< Our parent render pass.
+  U32 _stageCount;                      //!< A count of how many shader stages we have.
   VulkanShaderModule* _vertexShader;    //!< Our vertex shader, if applicable.
   VulkanShaderModule* _fragmentShader;  //!< Our fragment shader, if applicable.
   VulkanShaderModule* _geometryShader;  //!< Our geometry shader, if applicable.
   VulkanShaderModule* _computeShader;   //!< Our computer shader, if applicable.
+  VulkanPipeline* _pipeline;            //!< Our graphics pipeline.
 };
 }  // namespace Vulkan
 }  // namespace Onyx

@@ -26,6 +26,12 @@ class VulkanSwapchain final {
   VulkanSwapchain(VulkanDevice* device, VulkanSurface* surface, VkExtent2D extent);
   ~VulkanSwapchain();
 
+  //! Get our chosen image format.
+  VkSurfaceFormatKHR GetImageFormat() { return _imageFormat; }
+
+  //! Get our extents.
+  VkExtent2D GetExtent() { return _extent; }
+
  private:
   //! Choose an image format for our swapchain, allowing for preferred formats.
   VkSurfaceFormatKHR ChooseImageFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
