@@ -14,6 +14,7 @@
 namespace Onyx {
 namespace Vulkan {
 VkSurfaceKHR VulkanPlatform::CreateSurface(VulkanRendererBackend* backend, void* windowHandle) {
+  Logger::Debug("Creating Win32 Vulkan surface");
   VkWin32SurfaceCreateInfoKHR surfaceCreateInfo{VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR};
   surfaceCreateInfo.hinstance = static_cast<HINSTANCE>(backend->GetApplication()->GetHandle());
   surfaceCreateInfo.hwnd = static_cast<HWND>(windowHandle);

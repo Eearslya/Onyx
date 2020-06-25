@@ -75,7 +75,7 @@ const bool VulkanDevice::CreateLogicalDevice(const std::vector<const char*> requ
   }
 
   VK_CHECK(vkCreateDevice(_physicalDevice, &deviceCreateInfo, nullptr, &_device));
-
+  Logger::Debug("Vulkan logical device initialized.");
   return true;
 }
 
@@ -86,11 +86,13 @@ void VulkanDevice::CreateQueues() {
   if (_physicalDeviceDetails.Queues.ComputeQueue != -1) {
     _computeQueue = new VulkanQueue(this, _physicalDeviceDetails.Queues.ComputeQueue);
   }
+  Logger::Debug("Device command queues initialized.");
 }
 
 void VulkanDevice::CreateCommandPools() {
   _graphicsCommandPool =
       new VulkanCommandPool(this, _physicalDeviceDetails.Queues.GraphicsQueue, true, false, false);
+  Logger::Debug("Graphics command pool initialized.");
 }
 
 void VulkanDevice::DestroyCommandPools() { delete _graphicsCommandPool; }

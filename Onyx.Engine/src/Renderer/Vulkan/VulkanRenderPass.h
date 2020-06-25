@@ -5,6 +5,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <vector>
+
 namespace Onyx {
 namespace Vulkan {
 class VulkanDevice;
@@ -27,10 +29,20 @@ class VulkanRenderPass final {
   //! Get our Vulkan render pass handle.
   VkRenderPass GetRenderPass() { return _renderPass; }
 
+  //! Get one of our framebuffers.
+  VkFramebuffer GetFramebuffer(U32 index) { return _framebuffers[index]; }
+
  private:
-  VulkanDevice* _device;        //!< Our parent device.
-  VulkanSwapchain* _swapchain;  //!< Our compatible swapchain.
-  VkRenderPass _renderPass;     //!< Our render pass handle.
+  //! Create and store our framebuffers.
+  void CreateFramebuffers();
+
+  //! Destroy and clean up our framebuffers.
+  void DestroyFramebuffers();
+
+  VulkanDevice* _device;                     //!< Our parent device.
+  VulkanSwapchain* _swapchain;               //!< Our compatible swapchain.
+  VkRenderPass _renderPass;                  //!< Our render pass handle.
+  std::vector<VkFramebuffer> _framebuffers;  //!< Our framebuffers.
 };
 }  // namespace Vulkan
 }  // namespace Onyx

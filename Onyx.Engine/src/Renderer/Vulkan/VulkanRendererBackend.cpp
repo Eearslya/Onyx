@@ -31,6 +31,7 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
 
   if (_validationEnabled) {
     _debugger = new VulkanDebugger(_instance, VulkanDebugger::Level::WARNING);
+    Logger::Debug("Validation enabled. Debugger initialized.");
   }
 
   Platform::IWindow* applicationWindow = _application->GetApplicationWindow();

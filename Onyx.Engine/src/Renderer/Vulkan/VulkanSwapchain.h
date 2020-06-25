@@ -29,6 +29,12 @@ class VulkanSwapchain final {
   //! Get our chosen image format.
   VkSurfaceFormatKHR GetImageFormat() { return _imageFormat; }
 
+  //! Get the number of images in our swapchain.
+  U32 GetImageCount() { return _imageCount; }
+
+  //! Get a handle to one of our image views.
+  VkImageView GetImageView(U32 index) { return _imageViews[index]; }
+
   //! Get our extents.
   VkExtent2D GetExtent() { return _extent; }
 

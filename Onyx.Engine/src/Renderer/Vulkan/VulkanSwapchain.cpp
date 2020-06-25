@@ -31,6 +31,9 @@ VulkanSwapchain::VulkanSwapchain(VulkanDevice* device, VulkanSurface* surface, V
                                 support.Capabilities.maxImageExtent.height);
   }
 
+  Logger::Debug("Initializing swapchain of %d %dx%d images.", imageCount, _extent.width,
+                _extent.height);
+
   VulkanQueue* graphicsQueue = _device->GetGraphicsQueue();
   VulkanQueue* presentQueue = _device->GetPresentQueue();
 

@@ -59,7 +59,10 @@ VulkanShader::VulkanShader(VulkanDevice* device, const char* shaderName,
       _computeShader(nullptr) {
   _stageCount =
       (hasVertex ? 1 : 0) + (hasFragment ? 1 : 0) + (hasGeometry ? 1 : 0) + (hasCompute ? 1 : 0);
-  CreateModules(hasVertex, hasFragment, hasGeometry, hasCompute);
+  Logger::Debug("Initializing shader \"%s\" with %d modules: %s%s%s%s", shaderName, _stageCount,
+                hasVertex ? "VERT " : "", hasFragment ? "FRAG " : "", hasGeometry ? "GEOM " : "",
+                hasCompute ? "COMP" : "");
+      CreateModules(hasVertex, hasFragment, hasGeometry, hasCompute);
   CreatePipeline();
 }
 
@@ -91,6 +94,7 @@ void VulkanShader::CreateModules(bool hasVertex, bool hasFragment, bool hasGeome
 }
 
 void VulkanShader::CreatePipeline() {
+  Logger::Debug("Initializing shader pipeline \"%s\"", _shaderName);
   VulkanPipelineInfo info{};
   info.Extent = _renderPass->GetExtent();
   info.RenderPass = _renderPass;

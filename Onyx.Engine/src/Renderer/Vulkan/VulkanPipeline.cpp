@@ -113,6 +113,7 @@ VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanPipelineInfo pipeline
 
   VK_CHECK(vkCreateGraphicsPipelines(_device->GetLogicalDevice(), VK_NULL_HANDLE, 1,
                                      &pipelineCreateInfo, nullptr, &_graphicsPipeline));
+  Logger::Debug("Initialized Vulkan pipeline.");
 }
 
 VulkanPipeline::~VulkanPipeline() {
