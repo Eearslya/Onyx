@@ -11,6 +11,7 @@
 
 namespace Onyx {
 namespace Vulkan {
+class VulkanCommandPool;
 class VulkanQueue;
 class VulkanSurface;
 
@@ -41,6 +42,12 @@ class VulkanDevice final {
   //! Fetch our Queue objects.
   void GetQueues();
 
+  //! Create our Command Pools.
+  void CreateCommandPools();
+
+  //! Destroy and free our Command Pools.
+  void DestroyCommandPools();
+
   //! Destroy and free our Queue objects.
   void DestroyQueues();
 
@@ -60,6 +67,8 @@ class VulkanDevice final {
   VulkanQueue* _presentQueue;   //!< Our Presentation queue.
   VulkanQueue* _transferQueue;  //!< Our Transfer queue.
   VulkanQueue* _computeQueue;   //!< Our Compute queue.
+
+  VulkanCommandPool* _graphicsCommandPool;  //!< Our Graphics command pool.
 
   static const std::vector<const char*>
       _requiredExtensions;  //!< A list of required extensions for our Vulkan devices.

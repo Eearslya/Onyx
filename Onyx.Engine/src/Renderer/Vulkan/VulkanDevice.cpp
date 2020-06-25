@@ -4,6 +4,7 @@
 
 #include <set>
 
+#include "Renderer/Vulkan/VulkanCommandPool.h"
 #include "Renderer/Vulkan/VulkanPhysicalDevice.h"
 #include "Renderer/Vulkan/VulkanQueue.h"
 #include "Renderer/Vulkan/VulkanUtilities.h"
@@ -28,9 +29,11 @@ VulkanDevice::VulkanDevice(VkInstance instance, const bool validationEnabled,
   }
 
   GetQueues();
+  CreateCommandPools();
 }
 
 VulkanDevice::~VulkanDevice() {
+  DestroyCommandPools();
   DestroyQueues();
   DestroyLogicalDevice();
 }
@@ -84,6 +87,13 @@ void VulkanDevice::GetQueues() {
     _computeQueue = new VulkanQueue(this, _physicalDeviceDetails.Queues.ComputeQueue);
   }
 }
+
+void VulkanDevice::CreateCommandPools() {
+  _graphicsCommandPool =
+      new VulkanCommandPool(this, _physicalDeviceDetails.Queues.GraphicsQueue, true, false, false);
+}
+
+void VulkanDevice::DestroyCommandPools() { delete _graphicsCommandPool; }
 
 void VulkanDevice::DestroyQueues() {
   delete _computeQueue;
