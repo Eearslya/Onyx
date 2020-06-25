@@ -17,6 +17,7 @@ class IApplication;
 namespace Vulkan {
 class VulkanDebugger;
 class VulkanDevice;
+class VulkanShader;
 class VulkanSurface;
 class VulkanSwapchain;
 
@@ -69,6 +70,8 @@ class VulkanRendererBackend final : public IRendererBackend {
   VulkanSurface* _surface = nullptr;      //!< Our drawing surface.
   VulkanDevice* _device = nullptr;        //!< Our Vulkan device.
   VulkanSwapchain* _swapchain = nullptr;  //!< Our swapchain.
+
+  VulkanShader* _shader = nullptr;  //!< TEMPORARY Shader module.
 };
 }  // namespace Vulkan
 }  // namespace Onyx

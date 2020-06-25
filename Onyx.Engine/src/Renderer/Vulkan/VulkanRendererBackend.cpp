@@ -10,6 +10,7 @@
 #include "Platform/VulkanPlatform.h"
 #include "Renderer/Vulkan/VulkanDebugger.h"
 #include "Renderer/Vulkan/VulkanDevice.h"
+#include "Renderer/Vulkan/VulkanShader.h"
 #include "Renderer/Vulkan/VulkanSurface.h"
 #include "Renderer/Vulkan/VulkanSwapchain.h"
 #include "Renderer/Vulkan/VulkanUtilities.h"
@@ -38,9 +39,12 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
 
   Extent2D windowExtent = applicationWindow->GetExtent();
   _swapchain = new VulkanSwapchain(_device, _surface, windowExtent);
+
+  _shader = new VulkanShader(_device, "Basic", true, true, false, false);
 }
 
 VulkanRendererBackend::~VulkanRendererBackend() {
+  delete _shader;
   delete _swapchain;
   delete _device;
   delete _surface;
