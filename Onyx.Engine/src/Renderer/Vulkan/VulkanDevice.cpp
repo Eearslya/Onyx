@@ -28,7 +28,7 @@ VulkanDevice::VulkanDevice(VkInstance instance, const bool validationEnabled,
     Logger::Fatal("Failed to create logical device!");
   }
 
-  GetQueues();
+  CreateQueues();
   CreateCommandPools();
 }
 
@@ -79,7 +79,7 @@ const bool VulkanDevice::CreateLogicalDevice(const std::vector<const char*> requ
   return true;
 }
 
-void VulkanDevice::GetQueues() {
+void VulkanDevice::CreateQueues() {
   _graphicsQueue = new VulkanQueue(this, _physicalDeviceDetails.Queues.GraphicsQueue);
   _presentQueue = new VulkanQueue(this, _physicalDeviceDetails.Queues.PresentQueue);
   _transferQueue = new VulkanQueue(this, _physicalDeviceDetails.Queues.TransferQueue);

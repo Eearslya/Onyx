@@ -40,7 +40,7 @@ class VulkanDevice final {
   const bool CreateLogicalDevice(const std::vector<const char*> requiredLayers);
 
   //! Fetch our Queue objects.
-  void GetQueues();
+  void CreateQueues();
 
   //! Create our Command Pools.
   void CreateCommandPools();
