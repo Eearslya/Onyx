@@ -118,6 +118,14 @@ void WindowsWindow::Hide() {
 
 void WindowsWindow::RequestClose() { _closeRequested = true; }
 
+Extent2D WindowsWindow::GetExtent() {
+  RECT windowRect;
+  GetWindowRect(_hwnd, &windowRect);
+  U32 width = windowRect.right - windowRect.left;
+  U32 height = windowRect.bottom - windowRect.top;
+  return {width, height};
+}
+
 void WindowsWindow::RegisterWindowClass(HINSTANCE instance) {
   if (_classRegistered) {
     return;

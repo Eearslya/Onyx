@@ -11,6 +11,7 @@
 #include "Renderer/Vulkan/VulkanDebugger.h"
 #include "Renderer/Vulkan/VulkanDevice.h"
 #include "Renderer/Vulkan/VulkanSurface.h"
+#include "Renderer/Vulkan/VulkanSwapchain.h"
 #include "Renderer/Vulkan/VulkanUtilities.h"
 
 namespace Onyx {
@@ -34,9 +35,13 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
   _surface = new VulkanSurface(this, applicationWindow->GetHandle());
 
   _device = new VulkanDevice(_instance, _validationEnabled, _requiredLayers, _surface);
+
+  Extent2D windowExtent = applicationWindow->GetExtent();
+  _swapchain = new VulkanSwapchain(_device, _surface, windowExtent);
 }
 
 VulkanRendererBackend::~VulkanRendererBackend() {
+  delete _swapchain;
   delete _device;
   delete _surface;
 

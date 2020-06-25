@@ -20,10 +20,14 @@ typedef signed char I8;
 typedef double F64;
 typedef float F32;
 
+struct VkExtent2D;
+
 namespace Onyx {
 //! Struct that defines a 2D area.
 struct Extent2D {
   U32 Width;   //!< Width of the 2D area.
   U32 Height;  //!< Height of the 2D area.
+
+  operator VkExtent2D();
 };
 }  // namespace Onyx

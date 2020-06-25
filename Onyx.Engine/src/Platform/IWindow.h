@@ -49,6 +49,9 @@ class IWindow {
     \return A pointer to the underlying platform-specific handle.
    */
   virtual void* GetHandle() = 0;
+
+  //! Get the size of our window, in pixels.
+  virtual Extent2D GetExtent() = 0;
 };
 }  // namespace Platform
 

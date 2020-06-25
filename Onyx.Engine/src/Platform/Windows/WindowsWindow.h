@@ -40,6 +40,7 @@ class WindowsWindow final : public IWindow {
 
   bool CloseRequested() override { return _closeRequested; }
   void* GetHandle() override { return _hwnd; }
+  Extent2D GetExtent() override;
 
  private:
   void RegisterWindowClass(HINSTANCE instance);

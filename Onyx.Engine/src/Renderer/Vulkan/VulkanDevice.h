@@ -32,8 +32,17 @@ class VulkanDevice final {
   //! Get our physical device.
   VkPhysicalDevice GetPhysicalDevice() { return _physicalDevice; }
 
+  //! Get details about our physical device.
+  const VulkanPhysicalDeviceDetails& GetPhysicalDeviceDetails() { return _physicalDeviceDetails; }
+
   //! Get our logical device.
   VkDevice GetLogicalDevice() { return _device; }
+
+  //! Get our Graphics queue.
+  VulkanQueue* GetGraphicsQueue() { return _graphicsQueue; }
+
+  //! Get our Presentation queue.
+  VulkanQueue* GetPresentQueue() { return _presentQueue; }
 
  private:
   //! Create our logical Vulkan device.
