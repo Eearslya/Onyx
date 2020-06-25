@@ -13,6 +13,7 @@
 #include "Renderer/Vulkan/VulkanDebugger.h"
 #include "Renderer/Vulkan/VulkanDevice.h"
 #include "Renderer/Vulkan/VulkanRenderPass.h"
+#include "Renderer/Vulkan/VulkanSemaphore.h"
 #include "Renderer/Vulkan/VulkanShader.h"
 #include "Renderer/Vulkan/VulkanSurface.h"
 #include "Renderer/Vulkan/VulkanSwapchain.h"
@@ -52,9 +53,14 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
   for (U32 i = 0; i < imageCount; i++) {
     _commandBuffers[i] = _device->GetGraphicsCommandPool()->AllocateCommandBuffer(true);
   }
+
+  _imageAvailableSemaphore = new VulkanSemaphore(_device);
+  _renderFinishedSemaphore = new VulkanSemaphore(_device);
 }
 
 VulkanRendererBackend::~VulkanRendererBackend() {
+  delete _renderFinishedSemaphore;
+  delete _imageAvailableSemaphore;
   for (VulkanCommandBuffer* buffer : _commandBuffers) {
     _device->GetGraphicsCommandPool()->FreeCommandBuffer(buffer);
   }

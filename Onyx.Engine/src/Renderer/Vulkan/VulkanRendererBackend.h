@@ -19,6 +19,7 @@ class VulkanCommandBuffer;
 class VulkanDebugger;
 class VulkanDevice;
 class VulkanRenderPass;
+class VulkanSemaphore;
 class VulkanShader;
 class VulkanSurface;
 class VulkanSwapchain;
@@ -77,6 +78,8 @@ class VulkanRendererBackend final : public IRendererBackend {
   VulkanSwapchain* _swapchain = nullptr;              //!< Our swapchain.
   VulkanRenderPass* _renderPass = nullptr;            //!< Our default render pass.
   std::vector<VulkanCommandBuffer*> _commandBuffers;  //!< Our command buffers.
+  VulkanSemaphore* _imageAvailableSemaphore;  //!< Signals when swapchain image is available.
+  VulkanSemaphore* _renderFinishedSemaphore;  //!< Signals when rendering complete.
 
   VulkanShader* _shader = nullptr;  //!< TEMPORARY Shader module.
 };
