@@ -13,6 +13,7 @@ namespace Onyx {
 namespace Vulkan {
 class VulkanSurface;
 
+//! Represents the Vulkan logical device.
 class VulkanDevice final {
  public:
   //! Construct a new Vulkan device.
@@ -27,12 +28,13 @@ class VulkanDevice final {
   ~VulkanDevice();
 
  private:
-  bool _validationEnabled;
+  bool _validationEnabled;  //!< Indicates whether additional validation is enabled.
 
-  VkInstance _instance;
-  VkPhysicalDevice _physicalDevice;
-  VulkanSurface* _surface;
-  VulkanPhysicalDeviceDetails _physicalDeviceDetails;
+  VkInstance _instance;              //!< The parent Vulkan instance.
+  VkPhysicalDevice _physicalDevice;  //!< The selected Vulkan physical device.
+  VulkanSurface* _surface;           //!< The drawing surface.
+  VulkanPhysicalDeviceDetails
+      _physicalDeviceDetails;  //!< Details relating to the selected Vulkan physical device.
 };
 }  // namespace Vulkan
 }  // namespace Onyx
