@@ -109,7 +109,7 @@ const bool VulkanRendererBackend::PrepareFrame() {
   cmdBuf->Begin();
   cmdBuf->BeginRenderPass(_renderPass, _renderPass->GetFramebuffer(_currentImageIndex));
   cmdBuf->BindPipeline(_shader->GetPipeline());
-  cmdBuf->Draw(3, 1, 0, 1);
+  cmdBuf->Draw(6, 1, 0, 1);
   cmdBuf->EndRenderPass();
   cmdBuf->End();
 
