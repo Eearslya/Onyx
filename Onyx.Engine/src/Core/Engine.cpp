@@ -5,10 +5,13 @@
 #include "Renderer/Renderer.h"
 
 namespace Onyx {
-void Engine::Initialize() {
+const bool Engine::Initialize() {
   if (!Renderer::Initialize()) {
     Logger::Fatal("Could not initialize rendering API!");
+    return false;
   }
+
+  return true;
 }
 
 void Engine::Shutdown() { Renderer::Shutdown(); }

@@ -21,11 +21,5 @@ class IRendererBackend {
 
   //! Draw a frame.
   virtual const bool Frame() = 0;
-
-  //! Returns whether validation is enabled for this backend.
-  /*!
-    \return true if validation is enabled, false otherwise.
-  */
-  virtual const bool ValidationEnabled() const = 0;
 };
 }  // namespace Onyx

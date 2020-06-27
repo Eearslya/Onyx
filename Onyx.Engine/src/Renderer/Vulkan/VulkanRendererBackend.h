@@ -39,8 +39,6 @@ class VulkanRendererBackend final : public IRendererBackend {
   const bool PrepareFrame() override;
   const bool Frame() override;
 
-  const bool ValidationEnabled() const override { return _validationEnabled; }
-
   //! Get our Vulkan instance.
   /*!
     \return The Vulkan instance.

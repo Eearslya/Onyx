@@ -8,7 +8,7 @@
 namespace Onyx {
 class ONYX_API Application final {
  public:
-  static void Initialize(const wchar_t* applicationName);
+  static const bool Initialize(const wchar_t* applicationName);
   static void Shutdown();
 
   static void Run();
@@ -19,7 +19,7 @@ class ONYX_API Application final {
   static Extent2D GetWindowExtent();
 
  private:
-  static void CreateApplicationWindow();
+  static const bool CreateApplicationWindow();
   static void ShowApplicationWindow();
   static void HideApplicationWindow();
   static void DestroyApplicationWindow();

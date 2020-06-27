@@ -13,9 +13,7 @@ const bool Renderer::Initialize() {
   return true;
 }
 
-void Renderer::Shutdown() {
-  delete _backend;
-}
+void Renderer::Shutdown() { delete _backend; }
 
 const bool Renderer::PrepareFrame() { return _backend->PrepareFrame(); }
 

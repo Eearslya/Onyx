@@ -6,7 +6,7 @@
 namespace Onyx {
 class ONYX_API Engine final {
  public:
-  static void Initialize();
+  static const bool Initialize();
   static void Shutdown();
 
   static void Run();

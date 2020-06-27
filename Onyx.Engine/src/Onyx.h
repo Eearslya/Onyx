@@ -5,4 +5,5 @@
   Onyx Game Engine
 */
 
+#include "Core/Logger.h"
 #include "Platform/Application.h"

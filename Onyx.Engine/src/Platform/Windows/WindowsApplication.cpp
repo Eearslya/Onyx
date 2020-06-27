@@ -20,7 +20,6 @@ static const wchar_t* s_WindowClassName = L"OnyxWindow";
 LRESULT CALLBACK ApplicationWindowProcedure(HWND hwnd, U32 msg, WPARAM wParam, LPARAM lParam) {
   switch (msg) {
     case WM_ERASEBKGND:
-      Logger::Trace("[Window] WM_ERASEBKGND");
       return 1;
     case WM_CLOSE:
       Logger::Trace("[Window] WM_CLOSE");
@@ -35,12 +34,21 @@ LRESULT CALLBACK ApplicationWindowProcedure(HWND hwnd, U32 msg, WPARAM wParam, L
   return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
-void Application::Initialize(const wchar_t* applicationName) {
+const bool Application::Initialize(const wchar_t* applicationName) {
   Logger::Info("Initializing Windows application...");
   s_hInstance = GetModuleHandleW(nullptr);
-  CreateApplicationWindow();
+
+  if (!CreateApplicationWindow()) {
+    return false;
+  }
+
   ShowApplicationWindow();
-  Engine::Initialize();
+  
+  if (!Engine::Initialize()) {
+    return false;
+  }
+
+  return true;
 }
 
 void Application::Shutdown() {
@@ -48,7 +56,7 @@ void Application::Shutdown() {
   DestroyApplicationWindow();
 }
 
-void Application::CreateApplicationWindow() {
+const bool Application::CreateApplicationWindow() {
   WNDCLASSW wc{};
   wc.lpfnWndProc = ApplicationWindowProcedure;
   wc.hInstance = s_hInstance;
@@ -84,8 +92,12 @@ void Application::CreateApplicationWindow() {
 
   if (s_hWnd == nullptr) {
     DWORD errorCode = GetLastError();
+    Logger::Fatal("Failed to create application window!");
     MessageBoxW(NULL, TEXT("Window creation failed!"), TEXT("Error"), MB_ICONEXCLAMATION | MB_OK);
+    return false;
   }
+
+  return true;
 }
 
 void Application::ShowApplicationWindow() {
@@ -101,7 +113,7 @@ void Application::HideApplicationWindow() {
   }
 }
 
-void Application::DestroyApplicationWindow() {}
+void Application::DestroyApplicationWindow() { DestroyWindow(s_hWnd); }
 
 void Application::Run() {
   while (!s_CloseRequested) {
