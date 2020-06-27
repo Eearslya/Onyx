@@ -67,6 +67,7 @@ class VulkanRenderer final : public IRenderer {
   // Temporary for testing.
   VulkanShader* m_Shader = nullptr;
   std::vector<Vertex> m_Vertices;
+  std::vector<U16> m_Indices;
   VulkanVertexBuffer m_VertexBuffer;
   VulkanIndexBuffer m_IndexBuffer;
 

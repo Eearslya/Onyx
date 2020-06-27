@@ -16,7 +16,8 @@ class VulkanBuffer {
   const bool Create(VulkanDevice& device, size_t size);
   void Destroy(VulkanDevice& device);
 
-  void Map(VulkanDevice& device, void** data);
+  void Upload(VulkanDevice& device, void* data, size_t size, size_t offset = 0);
+  void Map(VulkanDevice& device, void** data, size_t offset = 0);
   void Unmap(VulkanDevice& device);
 
   virtual VkBufferUsageFlags GetBufferUsage() { return VK_BUFFER_USAGE_STORAGE_BUFFER_BIT; }

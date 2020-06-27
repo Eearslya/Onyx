@@ -79,18 +79,19 @@ VulkanRenderer::VulkanRenderer(const bool enableValidation)
     m_InFlightFences[i] = new VulkanFence(m_Device, true);
   }
 
-  m_Vertices = {{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-                {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-                {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+  m_Vertices = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+                {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+                {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+                {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
+  m_Indices = {0, 1, 2, 2, 3, 0};
 
   size_t vertexDataSize = m_Vertices.size() * sizeof(Vertex);
+  size_t indexDataSize = m_Indices.size() * sizeof(U16);
   m_VertexBuffer.Create(*m_Device, vertexDataSize);
-  m_IndexBuffer.Create(*m_Device, m_Vertices.size() * sizeof(U16));
+  m_IndexBuffer.Create(*m_Device, indexDataSize);
 
-  void* vertexData;
-  m_VertexBuffer.Map(*m_Device, &vertexData);
-  memcpy(vertexData, m_Vertices.data(), vertexDataSize);
-  m_VertexBuffer.Unmap(*m_Device);
+  m_VertexBuffer.Upload(*m_Device, m_Vertices.data(), vertexDataSize);
+  m_IndexBuffer.Upload(*m_Device, m_Indices.data(), indexDataSize);
 }
 
 VulkanRenderer::~VulkanRenderer() {
@@ -140,7 +141,8 @@ const bool VulkanRenderer::PrepareFrame() {
   cmdBuf->BindPipeline(m_Shader->GetPipeline());
   VkDeviceSize offsets[1] = {0};
   cmdBuf->BindVertexBuffers(1, &m_VertexBuffer, offsets);
-  cmdBuf->Draw(6, 1, 0, 1);
+  cmdBuf->BindIndexBuffer(m_IndexBuffer);
+  cmdBuf->DrawIndexed(static_cast<U32>(m_Indices.size()));
   cmdBuf->EndRenderPass();
   cmdBuf->End();
 

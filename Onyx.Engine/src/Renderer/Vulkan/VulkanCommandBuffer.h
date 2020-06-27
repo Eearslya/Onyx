@@ -32,7 +32,10 @@ class VulkanCommandBuffer final {
   void BeginRenderPass(VulkanRenderPass* renderPass, VkFramebuffer framebuffer);
   void BindPipeline(VulkanPipeline* pipeline);
   void BindVertexBuffers(U32 bufferCount, VulkanVertexBuffer* vertexBuffers, VkDeviceSize* offsets);
+  void BindIndexBuffer(VulkanIndexBuffer& indexBuffer);
   void Draw(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance);
+  void DrawIndexed(U32 indexCount, U32 instanceCount = 1, U32 firstIndex = 0, U32 indexOffset = 0,
+                   U32 instanceOffset = 0);
   void EndRenderPass();
 
   void Allocate(const bool primary);

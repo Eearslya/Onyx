@@ -56,9 +56,19 @@ void VulkanCommandBuffer::BindVertexBuffers(U32 bufferCount, VulkanVertexBuffer*
   vkCmdBindVertexBuffers(_commandBuffer, 0, bufferCount, buffers.data(), offsets);
 }
 
+void VulkanCommandBuffer::BindIndexBuffer(VulkanIndexBuffer& indexBuffer) {
+  vkCmdBindIndexBuffer(_commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+}
+
 void VulkanCommandBuffer::Draw(U32 vertexCount, U32 instanceCount, U32 firstVertex,
                                U32 firstInstance) {
   vkCmdDraw(_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
+void VulkanCommandBuffer::DrawIndexed(U32 indexCount, U32 instanceCount, U32 firstIndex,
+                                      U32 indexOffset, U32 instanceOffset) {
+  vkCmdDrawIndexed(_commandBuffer, indexCount, instanceCount, firstIndex, indexOffset,
+                   instanceOffset);
 }
 
 void VulkanCommandBuffer::EndRenderPass() { vkCmdEndRenderPass(_commandBuffer); }

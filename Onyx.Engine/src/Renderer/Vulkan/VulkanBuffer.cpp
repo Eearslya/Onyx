@@ -40,8 +40,15 @@ void VulkanBuffer::Destroy(VulkanDevice& device) {
   m_Buffer = VK_NULL_HANDLE;
 }
 
-void VulkanBuffer::Map(VulkanDevice& device, void** data) {
-  vkMapMemory(device, m_DeviceMemory, 0, m_Size, 0, data);
+void VulkanBuffer::Upload(VulkanDevice& device, void* data, size_t size, size_t offset) {
+  void* bufferData;
+  Map(device, &bufferData, offset);
+  memcpy(bufferData, data, size);
+  Unmap(device);
+}
+
+void VulkanBuffer::Map(VulkanDevice& device, void** data, size_t offset) {
+  vkMapMemory(device, m_DeviceMemory, offset, m_Size, 0, data);
 }
 
 void VulkanBuffer::Unmap(VulkanDevice& device) { vkUnmapMemory(device, m_DeviceMemory); }
