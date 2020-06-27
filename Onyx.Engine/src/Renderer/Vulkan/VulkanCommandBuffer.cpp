@@ -46,6 +46,16 @@ void VulkanCommandBuffer::BindPipeline(VulkanPipeline* pipeline) {
   vkCmdBindPipeline(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipeline());
 }
 
+void VulkanCommandBuffer::BindVertexBuffers(U32 bufferCount, VulkanVertexBuffer* vertexBuffers,
+                                            VkDeviceSize* offsets) {
+  std::vector<VkBuffer> buffers(bufferCount);
+  for (U32 i = 0; i < bufferCount; i++) {
+    buffers[i] = vertexBuffers[i];
+  }
+
+  vkCmdBindVertexBuffers(_commandBuffer, 0, bufferCount, buffers.data(), offsets);
+}
+
 void VulkanCommandBuffer::Draw(U32 vertexCount, U32 instanceCount, U32 firstVertex,
                                U32 firstInstance) {
   vkCmdDraw(_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);

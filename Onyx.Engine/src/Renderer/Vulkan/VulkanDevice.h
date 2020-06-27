@@ -29,44 +29,25 @@ class VulkanDevice final {
                const std::vector<const char*> requiredLayers, VulkanSurface* surface);
   ~VulkanDevice();
 
-  //! Wait for the device to be idle.
   void WaitIdle();
 
-  //! Get our physical device.
   VkPhysicalDevice GetPhysicalDevice() { return _physicalDevice; }
-
-  //! Get details about our physical device.
   const VulkanPhysicalDeviceDetails& GetPhysicalDeviceDetails() { return _physicalDeviceDetails; }
-
-  //! Get our logical device.
+  const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() {
+    return _physicalDeviceDetails.MemoryProperties;
+  }
   VkDevice GetLogicalDevice() { return _device; }
-
-  //! Get our Graphics queue.
   VulkanQueue* GetGraphicsQueue() { return _graphicsQueue; }
-
-  //! Get our Presentation queue.
   VulkanQueue* GetPresentQueue() { return _presentQueue; }
-
-  //! Get our graphics command pool.
   VulkanCommandPool* GetGraphicsCommandPool() { return _graphicsCommandPool; }
+  operator VkDevice() { return _device; }
 
  private:
-  //! Create our logical Vulkan device.
   const bool CreateLogicalDevice(const std::vector<const char*> requiredLayers);
-
-  //! Fetch our Queue objects.
   void CreateQueues();
-
-  //! Create our Command Pools.
   void CreateCommandPools();
-
-  //! Destroy and free our Command Pools.
   void DestroyCommandPools();
-
-  //! Destroy and free our Queue objects.
   void DestroyQueues();
-
-  //! Destroy and free our logical Vulkan device.
   void DestroyLogicalDevice();
 
   bool _validationEnabled;  //!< Indicates whether additional validation is enabled.

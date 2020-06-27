@@ -72,10 +72,10 @@ const bool Application::CreateApplicationWindow() {
   // Determine how big to make our actual window.
   // This will ensure that the drawable space is made at the requested size.
   // TODO: Somehow make this configurable.
-  U32 windowX = 100;
-  U32 windowY = 100;
-  U32 windowW = 1280;
-  U32 windowH = 720;
+  U32 windowW = 1600;
+  U32 windowH = 900;
+  U32 windowX = (1920 - windowW) / 2;
+  U32 windowY = (1080 - windowH) / 2;
 
   // Calculate how thick the window borders will be, and stretch the window
   // accordingly, such that our draw space matches the space requested.

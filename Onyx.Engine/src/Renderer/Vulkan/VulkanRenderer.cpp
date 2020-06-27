@@ -56,52 +56,65 @@ VulkanRenderer::VulkanRenderer(const bool enableValidation)
     Logger::Debug("Validation enabled. Debugger initialized.");
   }
 
-  _surface = new VulkanSurface(this);
+  m_Surface = new VulkanSurface(this);
 
-  _device = new VulkanDevice(_instance, _validationEnabled, _requiredLayers, _surface);
+  m_Device = new VulkanDevice(m_Instance, _validationEnabled, m_RequiredLayers, m_Surface);
 
   Extent2D windowExtent = Application::GetWindowExtent();
-  _swapchain = new VulkanSwapchain(_device, _surface, windowExtent);
+  m_Swapchain = new VulkanSwapchain(m_Device, m_Surface, windowExtent);
 
-  _renderPass = new VulkanRenderPass(_device, _swapchain);
-  _shader = new VulkanShader(_device, "Basic", _renderPass, true, true, false, false);
+  m_RenderPass = new VulkanRenderPass(m_Device, m_Swapchain);
+  m_Shader = new VulkanShader(m_Device, "Basic", m_RenderPass, true, true, false, false);
 
-  U32 imageCount = _swapchain->GetImageCount();
-  _commandBuffers.resize(imageCount);
-  _imageAvailableSemaphores.resize(imageCount);
-  _renderFinishedSemaphores.resize(imageCount);
-  _inFlightFences.resize(imageCount);
-  _imagesInFlight.resize(imageCount);
+  U32 imageCount = m_Swapchain->GetImageCount();
+  m_CommandBuffers.resize(imageCount);
+  m_ImageAvailableSemaphores.resize(imageCount);
+  m_RenderFinishedSemaphores.resize(imageCount);
+  m_InFlightFences.resize(imageCount);
+  m_ImagesInFlight.resize(imageCount);
   for (U32 i = 0; i < imageCount; i++) {
-    _commandBuffers[i] = _device->GetGraphicsCommandPool()->AllocateCommandBuffer(true);
-    _imageAvailableSemaphores[i] = new VulkanSemaphore(_device);
-    _renderFinishedSemaphores[i] = new VulkanSemaphore(_device);
-    _inFlightFences[i] = new VulkanFence(_device, true);
+    m_CommandBuffers[i] = m_Device->GetGraphicsCommandPool()->AllocateCommandBuffer(true);
+    m_ImageAvailableSemaphores[i] = new VulkanSemaphore(m_Device);
+    m_RenderFinishedSemaphores[i] = new VulkanSemaphore(m_Device);
+    m_InFlightFences[i] = new VulkanFence(m_Device, true);
   }
+
+  m_Vertices = {{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+                {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+                {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+
+  size_t vertexDataSize = m_Vertices.size() * sizeof(Vertex);
+  m_VertexBuffer.Create(*m_Device, vertexDataSize);
+  m_IndexBuffer.Create(*m_Device, m_Vertices.size() * sizeof(U16));
+
+  void* vertexData;
+  m_VertexBuffer.Map(*m_Device, &vertexData);
+  memcpy(vertexData, m_Vertices.data(), vertexDataSize);
+  m_VertexBuffer.Unmap(*m_Device);
 }
 
 VulkanRenderer::~VulkanRenderer() {
-  if (_device) {
-    _device->WaitIdle();
+  if (m_Device) {
+    m_Device->WaitIdle();
   }
 
-  for (VulkanFence* fence : _inFlightFences) {
+  for (VulkanFence* fence : m_InFlightFences) {
     delete fence;
   }
-  for (VulkanSemaphore* semaphore : _imageAvailableSemaphores) {
+  for (VulkanSemaphore* semaphore : m_ImageAvailableSemaphores) {
     delete semaphore;
   }
-  for (VulkanSemaphore* semaphore : _renderFinishedSemaphores) {
+  for (VulkanSemaphore* semaphore : m_RenderFinishedSemaphores) {
     delete semaphore;
   }
-  for (VulkanCommandBuffer* buffer : _commandBuffers) {
-    _device->GetGraphicsCommandPool()->FreeCommandBuffer(buffer);
+  for (VulkanCommandBuffer* buffer : m_CommandBuffers) {
+    m_Device->GetGraphicsCommandPool()->FreeCommandBuffer(buffer);
   }
-  delete _shader;
-  delete _renderPass;
-  delete _swapchain;
-  delete _device;
-  delete _surface;
+  delete m_Shader;
+  delete m_RenderPass;
+  delete m_Swapchain;
+  delete m_Device;
+  delete m_Surface;
 
   if (_validationEnabled) {
     DestroyDebugger();
@@ -111,20 +124,22 @@ VulkanRenderer::~VulkanRenderer() {
 }
 
 const bool VulkanRenderer::PrepareFrame() {
-  _inFlightFences[_currentFrame]->Wait();
+  m_InFlightFences[m_CurrentFrame]->Wait();
 
-  _swapchain->AcquireNextImage(_imageAvailableSemaphores[_currentFrame], &_currentImageIndex);
+  m_Swapchain->AcquireNextImage(m_ImageAvailableSemaphores[m_CurrentFrame], &m_CurrentImageIndex);
 
-  if (_imagesInFlight[_currentImageIndex] != nullptr) {
-    _imagesInFlight[_currentImageIndex]->Wait();
+  if (m_ImagesInFlight[m_CurrentImageIndex] != nullptr) {
+    m_ImagesInFlight[m_CurrentImageIndex]->Wait();
   }
-  _imagesInFlight[_currentImageIndex] = _inFlightFences[_currentFrame];
+  m_ImagesInFlight[m_CurrentImageIndex] = m_InFlightFences[m_CurrentFrame];
 
-  VulkanCommandBuffer* cmdBuf = _commandBuffers[_currentImageIndex];
+  VulkanCommandBuffer* cmdBuf = m_CommandBuffers[m_CurrentImageIndex];
   cmdBuf->Reset();
   cmdBuf->Begin();
-  cmdBuf->BeginRenderPass(_renderPass, _renderPass->GetFramebuffer(_currentImageIndex));
-  cmdBuf->BindPipeline(_shader->GetPipeline());
+  cmdBuf->BeginRenderPass(m_RenderPass, m_RenderPass->GetFramebuffer(m_CurrentImageIndex));
+  cmdBuf->BindPipeline(m_Shader->GetPipeline());
+  VkDeviceSize offsets[1] = {0};
+  cmdBuf->BindVertexBuffers(1, &m_VertexBuffer, offsets);
   cmdBuf->Draw(6, 1, 0, 1);
   cmdBuf->EndRenderPass();
   cmdBuf->End();
@@ -133,20 +148,20 @@ const bool VulkanRenderer::PrepareFrame() {
 }
 
 const bool VulkanRenderer::Frame() {
-  VulkanCommandBuffer* cmdBuf = _commandBuffers[_currentImageIndex];
+  VulkanCommandBuffer* cmdBuf = m_CommandBuffers[m_CurrentImageIndex];
 
-  _inFlightFences[_currentFrame]->Reset();
+  m_InFlightFences[m_CurrentFrame]->Reset();
 
-  _device->GetGraphicsQueue()->Submit(cmdBuf,
-                                      {_imageAvailableSemaphores[_currentFrame]->GetSemaphore()},
-                                      {_renderFinishedSemaphores[_currentFrame]->GetSemaphore()},
-                                      _inFlightFences[_currentFrame]->GetFence());
+  m_Device->GetGraphicsQueue()->Submit(cmdBuf,
+                                       {m_ImageAvailableSemaphores[m_CurrentFrame]->GetSemaphore()},
+                                       {m_RenderFinishedSemaphores[m_CurrentFrame]->GetSemaphore()},
+                                       m_InFlightFences[m_CurrentFrame]->GetFence());
 
-  _swapchain->Present(_device->GetGraphicsQueue(), _device->GetPresentQueue(),
-                      {_renderFinishedSemaphores[_currentFrame]->GetSemaphore()},
-                      _currentImageIndex);
+  m_Swapchain->Present(m_Device->GetGraphicsQueue(), m_Device->GetPresentQueue(),
+                       {m_RenderFinishedSemaphores[m_CurrentFrame]->GetSemaphore()},
+                       m_CurrentImageIndex);
 
-  _currentFrame = (_currentFrame + 1) % _maxFramesInFlight;
+  m_CurrentFrame = (m_CurrentFrame + 1) % s_MaxFramesInFlight;
 
   return true;
 }
@@ -174,25 +189,25 @@ const bool VulkanRenderer::CreateInstance() {
   instanceCreateInfo.pApplicationInfo = &applicationInfo;
 
   // Determine what instance extensions we require, and make sure they're available.
-  VulkanPlatform::GetRequiredExtensions(_requiredExtensions);
-  if (!VerifyInstanceExtensions(_requiredExtensions)) {
+  VulkanPlatform::GetRequiredExtensions(m_RequiredExtensions);
+  if (!VerifyInstanceExtensions(m_RequiredExtensions)) {
     Logger::Fatal("Vulkan Instance does not support required extensions!");
     return false;
   }
-  instanceCreateInfo.enabledExtensionCount = static_cast<U32>(_requiredExtensions.size());
-  instanceCreateInfo.ppEnabledExtensionNames = _requiredExtensions.data();
+  instanceCreateInfo.enabledExtensionCount = static_cast<U32>(m_RequiredExtensions.size());
+  instanceCreateInfo.ppEnabledExtensionNames = m_RequiredExtensions.data();
 
   // If we want validation layers, ensure we can use them.
   if (_validationEnabled) {
-    _requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
+    m_RequiredLayers.push_back("VK_LAYER_KHRONOS_validation");
   }
 
-  if (!VerifyInstanceLayers(_requiredLayers)) {
+  if (!VerifyInstanceLayers(m_RequiredLayers)) {
     Logger::Fatal("Vulkan Instance does not support required layers!");
     return false;
   }
-  instanceCreateInfo.enabledLayerCount = static_cast<U32>(_requiredLayers.size());
-  instanceCreateInfo.ppEnabledLayerNames = _requiredLayers.data();
+  instanceCreateInfo.enabledLayerCount = static_cast<U32>(m_RequiredLayers.size());
+  instanceCreateInfo.ppEnabledLayerNames = m_RequiredLayers.data();
 
   VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
   if (_validationEnabled) {
@@ -200,7 +215,7 @@ const bool VulkanRenderer::CreateInstance() {
     instanceCreateInfo.pNext = &debugCreateInfo;
   }
 
-  VK_CHECK(vkCreateInstance(&instanceCreateInfo, nullptr, &_instance));
+  VK_CHECK(vkCreateInstance(&instanceCreateInfo, nullptr, &m_Instance));
 
   return true;
 }
@@ -261,25 +276,25 @@ const bool VulkanRenderer::CreateDebugger(DebuggerLevel level) {
   debugCreateInfo.pUserData = this;
 
   static PFN_vkCreateDebugUtilsMessengerEXT func =
-      (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance,
+      (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance,
                                                                 "vkCreateDebugUtilsMessengerEXT");
   ASSERT_MSG(func, "Could not locate vkCreateDebugUtilsMessengerEXT!");
 
-  VK_CHECK(func(_instance, &debugCreateInfo, nullptr, &m_Debugger));
+  VK_CHECK(func(m_Instance, &debugCreateInfo, nullptr, &m_Debugger));
 
   return true;
 }
 
 void VulkanRenderer::DestroyDebugger() {
   static PFN_vkDestroyDebugUtilsMessengerEXT func =
-      (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance,
+      (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance,
                                                                  "vkDestroyDebugUtilsMessengerEXT");
   if (func) {  // Must not throw/assert during destruction
-    func(_instance, m_Debugger, nullptr);
+    func(m_Instance, m_Debugger, nullptr);
   }
 }
 
-void VulkanRenderer::DestroyInstance() { vkDestroyInstance(_instance, nullptr); }
+void VulkanRenderer::DestroyInstance() { vkDestroyInstance(m_Instance, nullptr); }
 
 void VulkanRenderer::FillDebuggerInfo(DebuggerLevel level,
                                       VkDebugUtilsMessengerCreateInfoEXT& debugCreateInfo) {

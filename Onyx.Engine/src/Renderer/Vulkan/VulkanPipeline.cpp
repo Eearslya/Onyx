@@ -2,6 +2,7 @@
 
 #include "VulkanPipeline.h"
 
+#include "Renderer/Vertex.h"
 #include "Renderer/Vulkan/VulkanDevice.h"
 #include "Renderer/Vulkan/VulkanRenderPass.h"
 #include "Renderer/Vulkan/VulkanUtilities.h"
@@ -12,12 +13,27 @@ VulkanPipeline::VulkanPipeline(VulkanDevice* device, VulkanPipelineInfo pipeline
     : _device(device), _pipelineLayout(VK_NULL_HANDLE), _pipelineInfo(pipelineInfo) {
   CreateLayout();
 
+  VkVertexInputBindingDescription vertexBindings[1]{};
+  vertexBindings[0].binding = 0;
+  vertexBindings[0].stride = sizeof(Vertex);
+  vertexBindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+  VkVertexInputAttributeDescription vertexAttributes[2]{};
+  vertexAttributes[0].binding = 0;
+  vertexAttributes[0].location = 0;
+  vertexAttributes[0].format = VK_FORMAT_R32G32_SFLOAT;
+  vertexAttributes[0].offset = offsetof(Vertex, Position);
+  vertexAttributes[1].binding = 0;
+  vertexAttributes[1].location = 1;
+  vertexAttributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+  vertexAttributes[1].offset = offsetof(Vertex, Color);
+
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
-  vertexInputInfo.vertexBindingDescriptionCount = 0;
-  vertexInputInfo.pVertexBindingDescriptions = nullptr;
-  vertexInputInfo.vertexAttributeDescriptionCount = 0;
-  vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+  vertexInputInfo.vertexBindingDescriptionCount = 1;
+  vertexInputInfo.pVertexBindingDescriptions = vertexBindings;
+  vertexInputInfo.vertexAttributeDescriptionCount = 2;
+  vertexInputInfo.pVertexAttributeDescriptions = vertexAttributes;
 
   VkPipelineInputAssemblyStateCreateInfo inputAssembly{
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};

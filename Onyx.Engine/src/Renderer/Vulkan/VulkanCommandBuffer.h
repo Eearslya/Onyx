@@ -5,6 +5,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "Renderer/Vulkan/VulkanBuffer.h"
+
 namespace Onyx {
 namespace Vulkan {
 class VulkanCommandPool;
@@ -24,30 +26,16 @@ class VulkanCommandBuffer final {
   VulkanCommandBuffer(VulkanDevice* device, VulkanCommandPool* pool);
   ~VulkanCommandBuffer() = default;
 
-  //! vkBeginCommandBuffer
   void Begin();
-
-  //! vkEndCommandBuffer
   void End();
-
   void Reset();
-
-  //! vkCmdBeginRenderPass
   void BeginRenderPass(VulkanRenderPass* renderPass, VkFramebuffer framebuffer);
-
-  //! vkCmdBindPipeline
   void BindPipeline(VulkanPipeline* pipeline);
-
-  //! vkCmdDraw
+  void BindVertexBuffers(U32 bufferCount, VulkanVertexBuffer* vertexBuffers, VkDeviceSize* offsets);
   void Draw(U32 vertexCount, U32 instanceCount, U32 firstVertex, U32 firstInstance);
-
-  //! vkCmdEndRenderPass
   void EndRenderPass();
 
-  //! Allocate our command buffer.
   void Allocate(const bool primary);
-
-  //! Free our command buffer.
   void Free();
 
   //! Get our command buffer handle.

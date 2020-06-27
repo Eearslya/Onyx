@@ -26,6 +26,10 @@
     <ClInclude Include="src\Platform\Application.h" />
     <ClInclude Include="src\Renderer\IRenderer.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanRenderer.h" />
+    <ClInclude Include="src\Math\Vector2.h" />
+    <ClInclude Include="src\Renderer\Vertex.h" />
+    <ClInclude Include="src\Math\Vector3.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Platform\Windows\WindowsApplication.cpp" />
@@ -48,6 +52,8 @@
     <ClCompile Include="src\Renderer\Vulkan\VulkanSemaphore.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanFence.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanRenderer.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanBuffer.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanUtilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\basic.vert" />

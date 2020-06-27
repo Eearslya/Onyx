@@ -97,6 +97,8 @@
     <ClInclude Include="src\Core\Engine.h" />
     <ClInclude Include="src\Core\FileUtils.h" />
     <ClInclude Include="src\Core\Logger.h" />
+    <ClInclude Include="src\Math\Vector2.h" />
+    <ClInclude Include="src\Math\Vector3.h" />
     <ClInclude Include="src\Onyx.h" />
     <ClInclude Include="src\Core\Defines.h" />
     <ClInclude Include="src\Core\Types.h" />
@@ -105,6 +107,8 @@
     <ClInclude Include="src\Platform\VulkanPlatform.h" />
     <ClInclude Include="src\Renderer\IRenderer.h" />
     <ClInclude Include="src\Renderer\Renderer.h" />
+    <ClInclude Include="src\Renderer\Vertex.h" />
+    <ClInclude Include="src\Renderer\Vulkan\VulkanBuffer.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanCommandBuffer.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanCommandPool.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanDevice.h" />
@@ -131,6 +135,7 @@
     <ClCompile Include="src\Platform\Windows\WindowsApplication.cpp" />
     <ClCompile Include="src\Platform\Windows\WindowsVulkanPlatform.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanCommandBuffer.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanCommandPool.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanDevice.cpp" />
@@ -144,6 +149,7 @@
     <ClCompile Include="src\Renderer\Vulkan\VulkanShader.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanSurface.cpp" />
     <ClCompile Include="src\Renderer\Vulkan\VulkanSwapchain.cpp" />
+    <ClCompile Include="src\Renderer\Vulkan\VulkanUtilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\Basic.frag" />
