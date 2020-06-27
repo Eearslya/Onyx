@@ -19,9 +19,8 @@ class VulkanPlatform {
     To be implemented per platform.
 
     \param backend The Vulkan renderer backend.
-    \param windowHandle A native window handle to use for creation.
   */
-  static VkSurfaceKHR CreateSurface(VulkanRendererBackend* backend, void* windowHandle);
+  static VkSurfaceKHR CreateSurface(VulkanRendererBackend* backend);
 
   //! Fill the given vector with any Vulkan extensions required for the platform.
   /*!

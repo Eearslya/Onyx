@@ -1,52 +1,135 @@
 #include "pch.h"
 
-#include "WindowsApplication.h"
-
 #include "Core/Engine.h"
-#include "Platform/IWindow.h"
-#include "Platform/Windows/WindowsWindow.h"
+#include "Platform/Application.h"
 
 namespace Onyx {
 #ifdef ONYX_PLATFORM_WINDOWS
-Platform::IApplication* Application::CreateApplication(const wchar_t* applicationName) {
+#include <Windows.h>
+
+// Generic application variables.
+const wchar_t* Application::s_ApplicationName;
+Application Application::s_Application;
+bool Application::s_WindowVisible = false;
+bool Application::s_CloseRequested = false;
+
+// Platform-specific variables.
+static HINSTANCE s_hInstance;
+static HWND s_hWnd;
+static const wchar_t* s_WindowClassName = L"OnyxWindow";
+
+LRESULT CALLBACK ApplicationWindowProcedure(HWND hwnd, U32 msg, WPARAM wParam, LPARAM lParam) {
+  switch (msg) {
+    case WM_ERASEBKGND:
+      Logger::Trace("[Window] WM_ERASEBKGND");
+      return 1;
+    case WM_CLOSE:
+      Logger::Trace("[Window] WM_CLOSE");
+      Application::RequestClose();
+      return 0;
+    case WM_DESTROY:
+      Logger::Trace("[Window] WM_DESTROY");
+      PostQuitMessage(0);
+      return 0;
+  }
+
+  return DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+
+void Application::Initialize(const wchar_t* applicationName) {
   Logger::Info("Initializing Windows application...");
-  Platform::WindowsApplication* app = new Platform::WindowsApplication(applicationName);
-  return app;
+  s_hInstance = GetModuleHandleW(nullptr);
+  CreateApplicationWindow();
+  ShowApplicationWindow();
+
+  //_engine = new Engine(this);
 }
 
-void Application::DestroyApplication(Platform::IApplication* app) { delete app; }
-#endif
+void Application::Shutdown() { DestroyApplicationWindow(); }
 
-namespace Platform {
-WindowsApplication::WindowsApplication(const wchar_t* applicationName)
-    : IApplication(applicationName) {
-  _hInstance = GetModuleHandleW(nullptr);
+void Application::CreateApplicationWindow() {
+  WNDCLASSW wc{};
+  wc.lpfnWndProc = ApplicationWindowProcedure;
+  wc.hInstance = s_hInstance;
+  wc.lpszClassName = s_WindowClassName;
+  RegisterClassW(&wc);
 
-  WindowCreateInfo createInfo{};
-  createInfo.StartPositionX = 100;
-  createInfo.StartPositionY = 100;
-  createInfo.StartWidth = 1280;
-  createInfo.StartHeight = 720;
-  createInfo.AllowMaximize = true;
-  createInfo.AllowMinimize = true;
-  createInfo.Title = applicationName;
+  // Set up some default window styling.
+  U32 windowStyle = WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION | WS_THICKFRAME;
+  U32 windowExStyle = WS_EX_APPWINDOW;
+  // windowStyle |= WS_MAXIMIZEBOX;
+  // windowStyle |= WS_MINIMIZEBOX;
 
-  _mainWindow = static_cast<WindowsWindow*>(Window::CreateApplicationWindow(this, createInfo));
-  _mainWindow->Show();
+  // Determine how big to make our actual window.
+  // This will ensure that the drawable space is made at the requested size.
+  // TODO: Somehow make this configurable.
+  U32 windowX = 100;
+  U32 windowY = 100;
+  U32 windowW = 1280;
+  U32 windowH = 720;
 
-  _engine = new Engine(this);
-}
+  // Calculate how thick the window borders will be, and stretch the window
+  // accordingly, such that our draw space matches the space requested.
+  RECT borderRect = {0, 0, 0, 0};
+  AdjustWindowRectEx(&borderRect, windowStyle, false, windowExStyle);
+  windowX += borderRect.left;
+  windowY += borderRect.top;
+  windowW += borderRect.right - borderRect.left;
+  windowH += borderRect.bottom - borderRect.top;
 
-WindowsApplication::~WindowsApplication() { delete _engine; }
+  s_hWnd =
+      CreateWindowExW(windowExStyle, s_WindowClassName, s_ApplicationName, windowStyle, windowX,
+                      windowY, windowW, windowH, nullptr, nullptr, s_hInstance, nullptr);
 
-void WindowsApplication::Run() {
-  while (!_mainWindow->CloseRequested()) {
-    _mainWindow->ProcessMessages();
-
-    _engine->OnLoop();
+  if (s_hWnd == nullptr) {
+    DWORD errorCode = GetLastError();
+    MessageBoxW(NULL, TEXT("Window creation failed!"), TEXT("Error"), MB_ICONEXCLAMATION | MB_OK);
   }
 }
 
-IWindow* WindowsApplication::GetApplicationWindow() { return _mainWindow; }
-}  // namespace Platform
+void Application::ShowApplicationWindow() {
+  if (!s_WindowVisible) {
+    ShowWindow(s_hWnd, SW_SHOW);
+    s_WindowVisible = true;
+  }
+}
+
+void Application::HideApplicationWindow() {
+  if (s_WindowVisible) {
+    s_WindowVisible = false;
+  }
+}
+
+void Application::DestroyApplicationWindow() {}
+
+void Application::Run() {
+  while (!s_CloseRequested) {
+    ProcessEvents();
+
+    //_engine->OnLoop();
+  }
+}
+
+void Application::RequestClose() { s_CloseRequested = true; }
+
+void Application::ProcessEvents() {
+  MSG message;
+  while (PeekMessageW(&message, NULL, 0, 0, PM_REMOVE)) {
+    TranslateMessage(&message);
+    DispatchMessageW(&message);
+  }
+}
+
+void* Application::GetHandle() { return static_cast<void*>(s_hInstance); }
+
+void* Application::GetWindowHandle() { return static_cast<void*>(s_hWnd); }
+
+Extent2D Application::GetWindowExtent() {
+  RECT windowRect;
+  GetWindowRect(s_hWnd, &windowRect);
+  U32 width = windowRect.right - windowRect.left;
+  U32 height = windowRect.bottom - windowRect.top;
+  return {width, height};
+}
+#endif
 }  // namespace Onyx

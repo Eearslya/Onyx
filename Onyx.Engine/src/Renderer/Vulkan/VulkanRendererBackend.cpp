@@ -5,8 +5,7 @@
 #include <set>
 #include <vector>
 
-#include "Platform/IApplication.h"
-#include "Platform/IWindow.h"
+#include "Platform/Application.h"
 #include "Platform/VulkanPlatform.h"
 #include "Renderer/Vulkan/VulkanCommandBuffer.h"
 #include "Renderer/Vulkan/VulkanCommandPool.h"
@@ -39,12 +38,11 @@ VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application
     Logger::Debug("Validation enabled. Debugger initialized.");
   }
 
-  Platform::IWindow* applicationWindow = _application->GetApplicationWindow();
-  _surface = new VulkanSurface(this, applicationWindow->GetHandle());
+  _surface = new VulkanSurface(this);
 
   _device = new VulkanDevice(_instance, _validationEnabled, _requiredLayers, _surface);
 
-  Extent2D windowExtent = applicationWindow->GetExtent();
+  Extent2D windowExtent = Application::GetWindowExtent();
   _swapchain = new VulkanSwapchain(_device, _surface, windowExtent);
 
   _renderPass = new VulkanRenderPass(_device, _swapchain);

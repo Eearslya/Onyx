@@ -6,9 +6,9 @@
 
 namespace Onyx {
 namespace Vulkan {
-VulkanSurface::VulkanSurface(VulkanRendererBackend* backend, void* windowHandle)
+VulkanSurface::VulkanSurface(VulkanRendererBackend* backend)
     : _instance(backend->GetInstance()), _surface(VK_NULL_HANDLE) {
-  _surface = VulkanPlatform::CreateSurface(backend, windowHandle);
+  _surface = VulkanPlatform::CreateSurface(backend);
 }
 
 VulkanSurface::~VulkanSurface() { vkDestroySurfaceKHR(_instance, _surface, nullptr); }

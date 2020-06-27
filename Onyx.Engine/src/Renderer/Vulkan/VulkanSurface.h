@@ -17,7 +17,7 @@ class VulkanSurface final {
     \param backend The Vulkan renderer that owns this surface.
     \param windowHandle Pointer to a native platform-specific window handle.
   */
-  VulkanSurface(VulkanRendererBackend* backend, void* windowHandle);
+  VulkanSurface(VulkanRendererBackend* backend);
   ~VulkanSurface();
 
   //! Get our Vulkan surface handle.

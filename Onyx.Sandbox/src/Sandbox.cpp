@@ -1,9 +1,9 @@
 #include <Onyx.h>
 
 int main(int argc, char** argv) {
-  Onyx::Platform::IApplication* application = Onyx::Application::CreateApplication(L"Onyx");
-  application->Run();
-  Onyx::Application::DestroyApplication(application);
+  Onyx::Application::Initialize(L"Onyx");
+  Onyx::Application::Run();
+  Onyx::Application::Shutdown();
 
   return 0;
 }

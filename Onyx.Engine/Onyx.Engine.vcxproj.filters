@@ -1,14 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="src\Platform\IApplication.h" />
-    <ClInclude Include="src\Platform\Windows\WindowsApplication.h" />
     <ClInclude Include="src\Core\Defines.h" />
     <ClInclude Include="src\Core\Types.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\Onyx.h" />
-    <ClInclude Include="src\Platform\IWindow.h" />
-    <ClInclude Include="src\Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="src\Core\Logger.h" />
     <ClInclude Include="src\Core\Engine.h" />
     <ClInclude Include="src\Renderer\Renderer.h" />
@@ -30,11 +26,11 @@
     <ClInclude Include="src\Renderer\Vulkan\VulkanCommandBuffer.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanSemaphore.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanFence.h" />
+    <ClInclude Include="src\Platform\Application.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Platform\Windows\WindowsApplication.cpp" />
     <ClCompile Include="src\pch.cpp" />
-    <ClCompile Include="src\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="src\Core\Logger.cpp" />
     <ClCompile Include="src\Core\Engine.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />

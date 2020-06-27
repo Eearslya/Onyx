@@ -5,4 +5,4 @@
   Onyx Game Engine
 */
 
-#include "Platform/IApplication.h"
+#include "Platform/Application.h"
