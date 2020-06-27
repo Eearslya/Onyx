@@ -1,21 +1,23 @@
 #include "pch.h"
 
 #include "Engine.h"
+
 #include "Renderer/Renderer.h"
 
 namespace Onyx {
-Engine::Engine(Platform::IApplication* application) : _application(application) {
-  if (!Renderer::Initialize(this)) {
+void Engine::Initialize() {
+  if (!Renderer::Initialize()) {
     Logger::Fatal("Could not initialize rendering API!");
   }
 }
 
-Engine::~Engine() { Renderer::Shutdown(); }
+void Engine::Shutdown() { Renderer::Shutdown(); }
 
 void Engine::Run() {}
 
-const bool Engine::OnLoop() { 
+const bool Engine::OnLoop() {
   Renderer::PrepareFrame();
   Renderer::Frame();
-  return true; }
+  return true;
+}
 }  // namespace Onyx

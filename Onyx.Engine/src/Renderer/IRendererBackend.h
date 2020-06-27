@@ -4,10 +4,6 @@
 #include "Core/Types.h"
 
 namespace Onyx {
-namespace Platform {
-class IApplication;
-}
-
 //! Generic RendererBackend interface, to be implemented by different graphics APIs.
 class IRendererBackend {
  public:
@@ -17,7 +13,7 @@ class IRendererBackend {
     \param enableValidation Indicates whether to add additional debug/validation calls
                             to our renderer.
   */
-  IRendererBackend(Platform::IApplication* application, const bool enableValidation) {}
+  IRendererBackend(const bool enableValidation) {}
   virtual ~IRendererBackend() = default;
 
   //! Prepare to draw a frame.

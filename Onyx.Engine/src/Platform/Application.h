@@ -3,6 +3,8 @@
 #include "Core/Defines.h"
 #include "Core/Types.h"
 
+#include "Core/Engine.h"
+
 namespace Onyx {
 class ONYX_API Application final {
  public:
@@ -27,6 +29,7 @@ class ONYX_API Application final {
   static const wchar_t* s_ApplicationName;
   static bool s_WindowVisible;
   static bool s_CloseRequested;
+
   static Application s_Application;
 };
 }  // namespace Onyx

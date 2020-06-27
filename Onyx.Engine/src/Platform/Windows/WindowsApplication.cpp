@@ -1,6 +1,5 @@
 #include "pch.h"
 
-#include "Core/Engine.h"
 #include "Platform/Application.h"
 
 namespace Onyx {
@@ -9,9 +8,9 @@ namespace Onyx {
 
 // Generic application variables.
 const wchar_t* Application::s_ApplicationName;
-Application Application::s_Application;
 bool Application::s_WindowVisible = false;
 bool Application::s_CloseRequested = false;
+Application Application::s_Application;
 
 // Platform-specific variables.
 static HINSTANCE s_hInstance;
@@ -41,11 +40,13 @@ void Application::Initialize(const wchar_t* applicationName) {
   s_hInstance = GetModuleHandleW(nullptr);
   CreateApplicationWindow();
   ShowApplicationWindow();
-
-  //_engine = new Engine(this);
+  Engine::Initialize();
 }
 
-void Application::Shutdown() { DestroyApplicationWindow(); }
+void Application::Shutdown() {
+  Engine::Shutdown();
+  DestroyApplicationWindow();
+}
 
 void Application::CreateApplicationWindow() {
   WNDCLASSW wc{};
@@ -106,7 +107,7 @@ void Application::Run() {
   while (!s_CloseRequested) {
     ProcessEvents();
 
-    //_engine->OnLoop();
+    Engine::OnLoop();
   }
 }
 

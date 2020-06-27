@@ -18,7 +18,7 @@ class Renderer final {
     \param engine The engine this Renderer should associate with.
     \return true upon successful initialization, false otherwise.
   */
-  static const bool Initialize(Engine* engine);
+  static const bool Initialize();
 
   //! Shutdown our rendering API, cleaning up all used data.
   static void Shutdown();
@@ -33,9 +33,6 @@ class Renderer final {
   static const bool Frame();
 
  private:
-  //! Our engine instance.
-  static Engine* _engine;
-
   //! Our rendering API back-end.
   static IRendererBackend* _backend;
 };

@@ -33,7 +33,7 @@ class VulkanRendererBackend final : public IRendererBackend {
     \param application The application this renderer belongs to.
     \param enableValidation Indicates whether to enable validation layers.
   */
-  VulkanRendererBackend(Platform::IApplication* application, const bool enableValidation);
+  VulkanRendererBackend(const bool enableValidation);
   ~VulkanRendererBackend();
 
   const bool PrepareFrame() override;

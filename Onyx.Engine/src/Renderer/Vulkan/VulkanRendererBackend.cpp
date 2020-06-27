@@ -22,10 +22,8 @@
 
 namespace Onyx {
 namespace Vulkan {
-VulkanRendererBackend::VulkanRendererBackend(Platform::IApplication* application,
-                                             const bool enableValidation)
-    : IRendererBackend(application, enableValidation),
-      _application(application),
+VulkanRendererBackend::VulkanRendererBackend(const bool enableValidation)
+    : IRendererBackend(enableValidation),
       _validationEnabled(enableValidation) {
   Logger::Info("Initializing Vulkan renderer...");
 
@@ -96,12 +94,12 @@ const bool VulkanRendererBackend::PrepareFrame() {
   _inFlightFences[_currentFrame]->Wait();
 
   _swapchain->AcquireNextImage(_imageAvailableSemaphores[_currentFrame], &_currentImageIndex);
-  
+
   if (_imagesInFlight[_currentImageIndex] != nullptr) {
     _imagesInFlight[_currentImageIndex]->Wait();
   }
   _imagesInFlight[_currentImageIndex] = _inFlightFences[_currentFrame];
-  
+
   VulkanCommandBuffer* cmdBuf = _commandBuffers[_currentImageIndex];
   cmdBuf->Reset();
   cmdBuf->Begin();
@@ -118,11 +116,12 @@ const bool VulkanRendererBackend::Frame() {
   VulkanCommandBuffer* cmdBuf = _commandBuffers[_currentImageIndex];
 
   _inFlightFences[_currentFrame]->Reset();
-  
-  _device->GetGraphicsQueue()->Submit(
-      cmdBuf, {_imageAvailableSemaphores[_currentFrame]->GetSemaphore()},
-      {_renderFinishedSemaphores[_currentFrame]->GetSemaphore()}, _inFlightFences[_currentFrame]->GetFence());
-  
+
+  _device->GetGraphicsQueue()->Submit(cmdBuf,
+                                      {_imageAvailableSemaphores[_currentFrame]->GetSemaphore()},
+                                      {_renderFinishedSemaphores[_currentFrame]->GetSemaphore()},
+                                      _inFlightFences[_currentFrame]->GetFence());
+
   _swapchain->Present(_device->GetGraphicsQueue(), _device->GetPresentQueue(),
                       {_renderFinishedSemaphores[_currentFrame]->GetSemaphore()},
                       _currentImageIndex);
