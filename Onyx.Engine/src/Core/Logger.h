@@ -16,7 +16,7 @@ class ONYX_API Logger final {
   */
   static void SetLevel(Level newLevel) { _logLevel = newLevel; }
 
-  //! Log with a TRACE severity.
+  //! Log with a Trace severity.
   /*!
     \param msg The message, formatted similarly to printf.
     \param ... The parameters to be inserted by printf.
@@ -30,7 +30,7 @@ class ONYX_API Logger final {
   */
   static void Debug(const char* msg, ...);
 
-  //! Log with an INFO severity.
+  //! Log with an Info severity.
   /*!
     \param msg The message, formatted similarly to printf.
     \param ... The parameters to be inserted by printf.
@@ -44,7 +44,7 @@ class ONYX_API Logger final {
   */
   static void Warn(const char* msg, ...);
 
-  //! Log with an ERROR severity.
+  //! Log with an Error severity.
   /*!
     \param msg The message, formatted similarly to printf.
     \param ... The parameters to be inserted by printf.

@@ -14,7 +14,7 @@ Logger::Level Logger::_logLevel = Logger::Level::TRACE;
 #elif defined(ONYX_DEBUG)
 Logger::Level Logger::_logLevel = Logger::Level::DEBUG;
 #else
-Logger::Level Logger::_logLevel = Logger::Level::INFO;
+Logger::Level Logger::_logLevel = Logger::Level::Info;
 #endif
 
 void Logger::WriteLog(Logger::Level level, const char* message, va_list args) {

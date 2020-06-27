@@ -3,13 +3,13 @@
 #include "Renderer.h"
 
 #include "Core/Engine.h"
-#include "Renderer/Vulkan/VulkanRendererBackend.h"
+#include "Renderer/Vulkan/VulkanRenderer.h"
 
 namespace Onyx {
-IRendererBackend* Renderer::_backend = nullptr;
+IRenderer* Renderer::_backend = nullptr;
 
 const bool Renderer::Initialize() {
-  _backend = new Vulkan::VulkanRendererBackend(true);
+  _backend = new Vulkan::VulkanRenderer(true);
   return true;
 }
 

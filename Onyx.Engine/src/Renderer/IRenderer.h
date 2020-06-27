@@ -5,7 +5,7 @@
 
 namespace Onyx {
 //! Generic RendererBackend interface, to be implemented by different graphics APIs.
-class IRendererBackend {
+class IRenderer {
  public:
   //! Construct our renderer backend, optionally with validation.
   /*!
@@ -13,8 +13,8 @@ class IRendererBackend {
     \param enableValidation Indicates whether to add additional debug/validation calls
                             to our renderer.
   */
-  IRendererBackend(const bool enableValidation) {}
-  virtual ~IRendererBackend() = default;
+  IRenderer(const bool enableValidation) {}
+  virtual ~IRenderer() = default;
 
   //! Prepare to draw a frame.
   virtual const bool PrepareFrame() = 0;

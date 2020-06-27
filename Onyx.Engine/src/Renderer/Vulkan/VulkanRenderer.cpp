@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "VulkanRendererBackend.h"
+#include "VulkanRenderer.h"
 
 #include <set>
 #include <vector>
@@ -9,7 +9,6 @@
 #include "Platform/VulkanPlatform.h"
 #include "Renderer/Vulkan/VulkanCommandBuffer.h"
 #include "Renderer/Vulkan/VulkanCommandPool.h"
-#include "Renderer/Vulkan/VulkanDebugger.h"
 #include "Renderer/Vulkan/VulkanDevice.h"
 #include "Renderer/Vulkan/VulkanFence.h"
 #include "Renderer/Vulkan/VulkanQueue.h"
@@ -22,9 +21,30 @@
 
 namespace Onyx {
 namespace Vulkan {
-VulkanRendererBackend::VulkanRendererBackend(const bool enableValidation)
-    : IRendererBackend(enableValidation),
-      _validationEnabled(enableValidation) {
+static VKAPI_ATTR VkBool32 VKAPI_CALL
+VulkanDebuggerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                       VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+                       const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+  switch (messageSeverity) {
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+      Logger::Error("Vulkan ERROR: %s", pCallbackData->pMessage);
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+      Logger::Warn("Vulkan WARNING: %s", pCallbackData->pMessage);
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+      Logger::Info("Vulkan INFO: %s", pCallbackData->pMessage);
+      break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+      Logger::Trace("Vulkan VERBOSE: %s", pCallbackData->pMessage);
+      break;
+  }
+
+  return VK_FALSE;
+}
+
+VulkanRenderer::VulkanRenderer(const bool enableValidation)
+    : IRenderer(enableValidation), _validationEnabled(enableValidation) {
   Logger::Info("Initializing Vulkan renderer...");
 
   if (!CreateInstance()) {
@@ -32,7 +52,7 @@ VulkanRendererBackend::VulkanRendererBackend(const bool enableValidation)
   }
 
   if (_validationEnabled) {
-    _debugger = new VulkanDebugger(_instance, VulkanDebugger::Level::WARNING);
+    CreateDebugger(DebuggerLevel::Warning);
     Logger::Debug("Validation enabled. Debugger initialized.");
   }
 
@@ -60,7 +80,7 @@ VulkanRendererBackend::VulkanRendererBackend(const bool enableValidation)
   }
 }
 
-VulkanRendererBackend::~VulkanRendererBackend() {
+VulkanRenderer::~VulkanRenderer() {
   if (_device) {
     _device->WaitIdle();
   }
@@ -84,13 +104,13 @@ VulkanRendererBackend::~VulkanRendererBackend() {
   delete _surface;
 
   if (_validationEnabled) {
-    delete _debugger;
+    DestroyDebugger();
   }
 
   DestroyInstance();
 }
 
-const bool VulkanRendererBackend::PrepareFrame() {
+const bool VulkanRenderer::PrepareFrame() {
   _inFlightFences[_currentFrame]->Wait();
 
   _swapchain->AcquireNextImage(_imageAvailableSemaphores[_currentFrame], &_currentImageIndex);
@@ -112,7 +132,7 @@ const bool VulkanRendererBackend::PrepareFrame() {
   return true;
 }
 
-const bool VulkanRendererBackend::Frame() {
+const bool VulkanRenderer::Frame() {
   VulkanCommandBuffer* cmdBuf = _commandBuffers[_currentImageIndex];
 
   _inFlightFences[_currentFrame]->Reset();
@@ -131,7 +151,7 @@ const bool VulkanRendererBackend::Frame() {
   return true;
 }
 
-const bool VulkanRendererBackend::CreateInstance() {
+const bool VulkanRenderer::CreateInstance() {
   // Check our Vulkan version and log it.
   // TODO: Ensure Vulkan version is high enough to support our app.
   U32 vulkanVersion;
@@ -174,9 +194,9 @@ const bool VulkanRendererBackend::CreateInstance() {
   instanceCreateInfo.enabledLayerCount = static_cast<U32>(_requiredLayers.size());
   instanceCreateInfo.ppEnabledLayerNames = _requiredLayers.data();
 
-  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
   if (_validationEnabled) {
-    debugCreateInfo = VulkanDebugger::GetCreateInfo(VulkanDebugger::Level::WARNING);
+    FillDebuggerInfo(DebuggerLevel::Warning, debugCreateInfo);
     instanceCreateInfo.pNext = &debugCreateInfo;
   }
 
@@ -185,7 +205,7 @@ const bool VulkanRendererBackend::CreateInstance() {
   return true;
 }
 
-const bool VulkanRendererBackend::VerifyInstanceExtensions(
+const bool VulkanRenderer::VerifyInstanceExtensions(
     const std::vector<const char*>& requiredExtensions) {
   U32 availableExtensionCount = 0;
   vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr);
@@ -211,8 +231,7 @@ const bool VulkanRendererBackend::VerifyInstanceExtensions(
   return true;
 }
 
-const bool VulkanRendererBackend::VerifyInstanceLayers(
-    const std::vector<const char*>& requiredLayers) {
+const bool VulkanRenderer::VerifyInstanceLayers(const std::vector<const char*>& requiredLayers) {
   U32 availableLayerCount = 0;
   vkEnumerateInstanceLayerProperties(&availableLayerCount, nullptr);
   std::vector<VkLayerProperties> availableLayers(availableLayerCount);
@@ -236,6 +255,51 @@ const bool VulkanRendererBackend::VerifyInstanceLayers(
   return true;
 }
 
-void VulkanRendererBackend::DestroyInstance() { vkDestroyInstance(_instance, nullptr); }
+const bool VulkanRenderer::CreateDebugger(DebuggerLevel level) {
+  VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+  FillDebuggerInfo(DebuggerLevel::Warning, debugCreateInfo);
+  debugCreateInfo.pUserData = this;
+
+  static PFN_vkCreateDebugUtilsMessengerEXT func =
+      (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance,
+                                                                "vkCreateDebugUtilsMessengerEXT");
+  ASSERT_MSG(func, "Could not locate vkCreateDebugUtilsMessengerEXT!");
+
+  VK_CHECK(func(_instance, &debugCreateInfo, nullptr, &m_Debugger));
+
+  return true;
+}
+
+void VulkanRenderer::DestroyDebugger() {
+  static PFN_vkDestroyDebugUtilsMessengerEXT func =
+      (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance,
+                                                                 "vkDestroyDebugUtilsMessengerEXT");
+  if (func) {  // Must not throw/assert during destruction
+    func(_instance, m_Debugger, nullptr);
+  }
+}
+
+void VulkanRenderer::DestroyInstance() { vkDestroyInstance(_instance, nullptr); }
+
+void VulkanRenderer::FillDebuggerInfo(DebuggerLevel level,
+                                      VkDebugUtilsMessengerCreateInfoEXT& debugCreateInfo) {
+  U32 severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+  if (level >= DebuggerLevel::Warning) {
+    severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+  }
+  if (level >= DebuggerLevel::Info) {
+    severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+  }
+  if (level >= DebuggerLevel::Trace) {
+    severity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+  }
+
+  debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+  debugCreateInfo.messageSeverity = severity;
+  debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
+                                VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+  debugCreateInfo.pfnUserCallback = VulkanDebuggerCallback;
+}
 }  // namespace Vulkan
 }  // namespace Onyx

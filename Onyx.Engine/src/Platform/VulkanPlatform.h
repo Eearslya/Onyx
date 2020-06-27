@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "Renderer/Vulkan/VulkanRendererBackend.h"
+#include "Renderer/Vulkan/VulkanRenderer.h"
 
 namespace Onyx {
 namespace Vulkan {
@@ -20,7 +20,7 @@ class VulkanPlatform {
 
     \param backend The Vulkan renderer backend.
   */
-  static VkSurfaceKHR CreateSurface(VulkanRendererBackend* backend);
+  static VkSurfaceKHR CreateSurface(VulkanRenderer* backend);
 
   //! Fill the given vector with any Vulkan extensions required for the platform.
   /*!

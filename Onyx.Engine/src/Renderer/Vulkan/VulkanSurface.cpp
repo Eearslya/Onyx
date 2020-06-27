@@ -6,7 +6,7 @@
 
 namespace Onyx {
 namespace Vulkan {
-VulkanSurface::VulkanSurface(VulkanRendererBackend* backend)
+VulkanSurface::VulkanSurface(VulkanRenderer* backend)
     : _instance(backend->GetInstance()), _surface(VK_NULL_HANDLE) {
   _surface = VulkanPlatform::CreateSurface(backend);
 }

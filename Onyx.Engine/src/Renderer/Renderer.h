@@ -5,7 +5,7 @@
 
 namespace Onyx {
 class Engine;
-class IRendererBackend;
+class IRenderer;
 
 //! Main rendering API to be used by the engine and application.
 class Renderer final {
@@ -34,6 +34,6 @@ class Renderer final {
 
  private:
   //! Our rendering API back-end.
-  static IRendererBackend* _backend;
+  static IRenderer* _backend;
 };
 }  // namespace Onyx
