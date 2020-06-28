@@ -43,6 +43,7 @@ class VulkanRenderer final : public IRenderer {
   void DestroyDebugger();
   void DestroyInstance();
 
+  void UpdateUniformBuffer(U32 bufferIndex);
   void FillDebuggerInfo(DebuggerLevel level, VkDebugUtilsMessengerCreateInfoEXT& debugCreateInfo);
 
   bool _validationEnabled;
@@ -70,6 +71,7 @@ class VulkanRenderer final : public IRenderer {
   std::vector<U16> m_Indices;
   VulkanVertexBuffer m_VertexBuffer;
   VulkanIndexBuffer m_IndexBuffer;
+  std::vector<VulkanUniformBuffer> m_UniformBuffers;
 
   static const U32 s_MaxFramesInFlight = 2;
 };

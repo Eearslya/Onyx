@@ -2,11 +2,15 @@
 
 #include "VulkanRenderer.h"
 
+#include <chrono>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <set>
 #include <vector>
 
 #include "Platform/Application.h"
 #include "Platform/VulkanPlatform.h"
+#include "Renderer/UniformBufferObject.h"
 #include "Renderer/Vulkan/VulkanCommandBuffer.h"
 #include "Renderer/Vulkan/VulkanCommandPool.h"
 #include "Renderer/Vulkan/VulkanDevice.h"
@@ -72,6 +76,7 @@ VulkanRenderer::VulkanRenderer(const bool enableValidation)
   m_RenderFinishedSemaphores.resize(imageCount);
   m_InFlightFences.resize(imageCount);
   m_ImagesInFlight.resize(imageCount);
+  m_UniformBuffers.resize(imageCount);
   for (U32 i = 0; i < imageCount; i++) {
     m_CommandBuffers[i] = m_Device->GetGraphicsCommandPool()->AllocateCommandBuffer(true);
     m_ImageAvailableSemaphores[i] = new VulkanSemaphore(m_Device);
@@ -139,9 +144,12 @@ const bool VulkanRenderer::PrepareFrame() {
   cmdBuf->Begin();
   cmdBuf->BeginRenderPass(m_RenderPass, m_RenderPass->GetFramebuffer(m_CurrentImageIndex));
   cmdBuf->BindPipeline(m_Shader->GetPipeline());
+  VkDescriptorSet descriptorSets[] = {m_Shader->GetDescriptorSet(m_CurrentImageIndex)};
+  cmdBuf->BindDescriptorSets(m_Shader->GetPipeline(), 1, descriptorSets);
   VkDeviceSize offsets[1] = {0};
   cmdBuf->BindVertexBuffers(1, &m_VertexBuffer, offsets);
   cmdBuf->BindIndexBuffer(m_IndexBuffer);
+  UpdateUniformBuffer(m_CurrentImageIndex);
   cmdBuf->DrawIndexed(static_cast<U32>(m_Indices.size()));
   cmdBuf->EndRenderPass();
   cmdBuf->End();
@@ -297,6 +305,24 @@ void VulkanRenderer::DestroyDebugger() {
 }
 
 void VulkanRenderer::DestroyInstance() { vkDestroyInstance(m_Instance, nullptr); }
+
+void VulkanRenderer::UpdateUniformBuffer(U32 bufferIndex) {
+  static auto startTime = std::chrono::high_resolution_clock::now();
+
+  auto currentTime = std::chrono::high_resolution_clock::now();
+  float time =
+      std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+  UniformBufferObject ubo{};
+  ubo.Model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                         glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.Projection = glm::perspective(
+      glm::radians(45.0f),
+      (F32)m_Swapchain->GetExtent().width / (F32)m_Swapchain->GetExtent().height, 0.1f, 1000.0f);
+  ubo.Projection[1][1] *= -1;
+
+  m_Shader->UpdateUniformBuffer(m_CurrentImageIndex, ubo);
+}
 
 void VulkanRenderer::FillDebuggerInfo(DebuggerLevel level,
                                       VkDebugUtilsMessengerCreateInfoEXT& debugCreateInfo) {

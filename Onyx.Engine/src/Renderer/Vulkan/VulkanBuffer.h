@@ -39,5 +39,10 @@ class VulkanIndexBuffer : public VulkanBuffer {
  public:
   VkBufferUsageFlags GetBufferUsage() override { return VK_BUFFER_USAGE_INDEX_BUFFER_BIT; }
 };
+
+class VulkanUniformBuffer : public VulkanBuffer {
+ public:
+  VkBufferUsageFlags GetBufferUsage() override { return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT; }
+};
 }  // namespace Vulkan
 }  // namespace Onyx

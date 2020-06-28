@@ -2,6 +2,10 @@
 
 #include "VulkanShader.h"
 
+#define GLM_FORCE_RADIANS
+#include <chrono>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <string>
 #include <vector>
 
@@ -62,11 +66,15 @@ VulkanShader::VulkanShader(VulkanDevice* device, const char* shaderName,
   Logger::Debug("Initializing shader \"%s\" with %d modules: %s%s%s%s", shaderName, _stageCount,
                 hasVertex ? "VERT " : "", hasFragment ? "FRAG " : "", hasGeometry ? "GEOM " : "",
                 hasCompute ? "COMP" : "");
-      CreateModules(hasVertex, hasFragment, hasGeometry, hasCompute);
+  CreateModules(hasVertex, hasFragment, hasGeometry, hasCompute);
   CreatePipeline();
+  CreateUniformBuffers();
+  CreateDescriptorPool();
+  CreateDescriptorSets();
 }
 
 VulkanShader::~VulkanShader() {
+  DestroyDescriptorPool();
   DestroyPipeline();
   DestroyModules();
 }
@@ -113,16 +121,100 @@ void VulkanShader::CreatePipeline() {
     info.ShaderStageInfos.push_back(_computeShader->GetPipelineCreateInfo());
   }
 
+  VkDescriptorSetLayoutBinding layoutBinding{};
+  layoutBinding.binding = 0;
+  layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  layoutBinding.descriptorCount = 1;
+  layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  layoutBinding.pImmutableSamplers = nullptr;
+
+  VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo{
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+  descriptorLayoutInfo.bindingCount = 1;
+  descriptorLayoutInfo.pBindings = &layoutBinding;
+
+  m_DescriptorSetLayouts.resize(1);
+  VK_CHECK(vkCreateDescriptorSetLayout(*_device, &descriptorLayoutInfo, nullptr,
+                                       &m_DescriptorSetLayouts[0]));
+  info.DescriptorSets = m_DescriptorSetLayouts;
+
   _pipeline = new VulkanPipeline(_device, info);
 }
 
-void VulkanShader::DestroyPipeline() { delete _pipeline; }
+void VulkanShader::CreateUniformBuffers() {
+  m_UniformBuffers.resize(s_DescriptorPoolSize);
+  for (U32 i = 0; i < s_DescriptorPoolSize; i++) {
+    m_UniformBuffers[i].Create(*_device, sizeof(UniformBufferObject));
+  }
+}
+
+void VulkanShader::CreateDescriptorPool() {
+  VkDescriptorPoolSize poolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER};
+  poolSize.descriptorCount = s_DescriptorPoolSize;  // TODO: Figure this value out intelligently
+
+  VkDescriptorPoolCreateInfo poolCreateInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+  poolCreateInfo.poolSizeCount = 1;
+  poolCreateInfo.pPoolSizes = &poolSize;
+  poolCreateInfo.maxSets = s_DescriptorPoolSize;  // TODO: Figure this value out intelligently
+
+  VK_CHECK(vkCreateDescriptorPool(*_device, &poolCreateInfo, nullptr, &m_DescriptorPool));
+}
+
+void VulkanShader::CreateDescriptorSets() {
+  std::vector<VkDescriptorSetLayout> layouts(s_DescriptorPoolSize, m_DescriptorSetLayouts[0]);
+  VkDescriptorSetAllocateInfo allocInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+  allocInfo.descriptorPool = m_DescriptorPool;
+  allocInfo.descriptorSetCount = s_DescriptorPoolSize;
+  allocInfo.pSetLayouts = layouts.data();
+  m_DescriptorSets.resize(s_DescriptorPoolSize);
+  VK_CHECK(vkAllocateDescriptorSets(*_device, &allocInfo, m_DescriptorSets.data()));
+
+  for (U32 i = 0; i < s_DescriptorPoolSize; i++) {
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = m_UniformBuffers[i];
+    bufferInfo.offset = 0;
+    bufferInfo.range = sizeof(UniformBufferObject);
+
+    VkWriteDescriptorSet descriptorWrite{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    descriptorWrite.dstSet = m_DescriptorSets[i];
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &bufferInfo;
+    descriptorWrite.pImageInfo = nullptr;
+    descriptorWrite.pTexelBufferView = nullptr;
+
+    vkUpdateDescriptorSets(*_device, 1, &descriptorWrite, 0, nullptr);
+  }
+}
+
+void VulkanShader::DestroyDescriptorPool() {
+  vkDestroyDescriptorPool(*_device, m_DescriptorPool, nullptr);
+}
+
+void VulkanShader::DestroyUniformBuffers() {
+  for (VulkanUniformBuffer buffer : m_UniformBuffers) {
+    buffer.Destroy(*_device);
+  }
+}
+
+void VulkanShader::DestroyPipeline() {
+  for (VkDescriptorSetLayout layout : m_DescriptorSetLayouts) {
+    vkDestroyDescriptorSetLayout(*_device, layout, nullptr);
+  }
+  delete _pipeline;
+}
 
 void VulkanShader::DestroyModules() {
   delete _computeShader;
   delete _geometryShader;
   delete _fragmentShader;
   delete _vertexShader;
+}
+
+void VulkanShader::UpdateUniformBuffer(U32 bufferIndex, UniformBufferObject& ubo) {
+  m_UniformBuffers[bufferIndex].Upload(*_device, &ubo, sizeof(ubo));
 }
 }  // namespace Vulkan
 }  // namespace Onyx

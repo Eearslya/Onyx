@@ -60,6 +60,11 @@ void VulkanCommandBuffer::BindIndexBuffer(VulkanIndexBuffer& indexBuffer) {
   vkCmdBindIndexBuffer(_commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 }
 
+void VulkanCommandBuffer::BindDescriptorSets(VulkanPipeline* pipeline, U32 setCount, VkDescriptorSet* descriptorSets) {
+  vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          pipeline->GetPipelineLayout(), 0, setCount, descriptorSets, 0, nullptr);
+}
+
 void VulkanCommandBuffer::Draw(U32 vertexCount, U32 instanceCount, U32 firstVertex,
                                U32 firstInstance) {
   vkCmdDraw(_commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);

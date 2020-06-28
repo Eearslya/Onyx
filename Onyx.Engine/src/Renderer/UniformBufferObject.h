@@ -7,8 +7,9 @@
 #include <glm/glm.hpp>
 
 namespace Onyx {
-struct Vertex {
-  glm::vec2 Position;
-  glm::vec3 Color;
+struct UniformBufferObject {
+  glm::mat4 Model;
+  glm::mat4 View;
+  glm::mat4 Projection;
 };
 }  // namespace Onyx

@@ -14,37 +14,29 @@ class VulkanRenderPass;
 
 //! Contains information necessary to construct a new pipeline.
 struct VulkanPipelineInfo {
-  VkExtent2D Extent;             //!< The extent of our pipeline.
-  VulkanRenderPass* RenderPass;  //!< The render pass this pipeline will run in.
-  std::vector<VkPipelineShaderStageCreateInfo>
-      ShaderStageInfos;  //!< The shader stages this pipeline will execute.
+  VkExtent2D Extent;
+  VulkanRenderPass* RenderPass;
+  std::vector<VkPipelineShaderStageCreateInfo> ShaderStageInfos;
+  std::vector<VkDescriptorSetLayout> DescriptorSets;
 };
 
 //! Represents a Vulkan pipeline.
 class VulkanPipeline final {
  public:
-  //! Construct a new VulkanPipeline.
-  /*!
-    \param device The Vulkan device which owns this pipeline.
-    \param pipelineInfo The information struct which dictates how to construct the pipeline.
-  */
   VulkanPipeline(VulkanDevice* device, VulkanPipelineInfo pipelineInfo);
   ~VulkanPipeline();
 
-  //! Get our pipeline handle.
   VkPipeline GetPipeline() { return _graphicsPipeline; }
+  VkPipelineLayout GetPipelineLayout() { return _pipelineLayout; }
 
  private:
-  //! Create our Pipeline Layout.
   void CreateLayout();
-
-  //! Destroy our Pipeline Layout.
   void DestroyLayout();
 
-  VulkanDevice* _device;             //!< Our parent device.
-  VkPipelineLayout _pipelineLayout;  //!< Our pipeline layut.
-  VulkanPipelineInfo _pipelineInfo;  //!< Our pipeline information struct.
-  VkPipeline _graphicsPipeline;      //!< Our pipeline handle.
+  VulkanDevice* _device;
+  VkPipelineLayout _pipelineLayout;
+  VulkanPipelineInfo _pipelineInfo;
+  VkPipeline _graphicsPipeline;
 };
 }  // namespace Vulkan
 }  // namespace Onyx

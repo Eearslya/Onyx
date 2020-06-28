@@ -26,10 +26,9 @@
     <ClInclude Include="src\Platform\Application.h" />
     <ClInclude Include="src\Renderer\IRenderer.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanRenderer.h" />
-    <ClInclude Include="src\Math\Vector2.h" />
     <ClInclude Include="src\Renderer\Vertex.h" />
-    <ClInclude Include="src\Math\Vector3.h" />
     <ClInclude Include="src\Renderer\Vulkan\VulkanBuffer.h" />
+    <ClInclude Include="src\Renderer\UniformBufferObject.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Platform\Windows\WindowsApplication.cpp" />

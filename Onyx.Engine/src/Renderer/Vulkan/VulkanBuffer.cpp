@@ -41,6 +41,7 @@ void VulkanBuffer::Destroy(VulkanDevice& device) {
 }
 
 void VulkanBuffer::Upload(VulkanDevice& device, void* data, size_t size, size_t offset) {
+  // TODO: Staging buffers
   void* bufferData;
   Map(device, &bufferData, offset);
   memcpy(bufferData, data, size);

@@ -6,6 +6,10 @@
 #include <vulkan/vulkan.h>
 
 #include <string>
+#include <vector>
+
+#include "Renderer/UniformBufferObject.h"
+#include "Renderer/Vulkan/VulkanBuffer.h"
 
 namespace Onyx {
 namespace Vulkan {
@@ -38,61 +42,49 @@ class VulkanShaderModule final {
   VkShaderModule _shaderModule;                         //!< Handle to our Vulkan shader module.
 };
 
-//! Represents a full shader suite.
 class VulkanShader final {
  public:
-  //! Construct a new VulkanShader.
-  /*!
-    \param device The Vulkan device which owns this shader.
-    \param shaderName The name of the shader to load.
-    \param renderPass The render pass which will use this shader.
-    \param hasVertex Indicates whether this shader has a Vertex stage.
-    \param hasFragment Indicates whether this shader has a Fragment stage.
-    \param hasGeometry Indicates whether this shader has a Geometry stage.
-    \param hasCompute Indicates whether this shader has a Compute stage.
-  */
   VulkanShader(VulkanDevice* device, const char* shaderName, VulkanRenderPass* renderPass,
                bool hasVertex = true, bool hasFragment = true, bool hasGeometry = false,
                bool hasCompute = false);
   ~VulkanShader();
 
-  //! Get our pipeline handle.
+  void UpdateUniformBuffer(U32 bufferIndex, UniformBufferObject& ubo);
+
   VulkanPipeline* GetPipeline() { return _pipeline; }
+  VkDescriptorSet GetDescriptorSet(U32 setIndex) { return m_DescriptorSets[setIndex]; }
 
-  //! Indicates whether this shader has a Vertex stage.
   const bool HasVertexStage() const { return _vertexShader != nullptr; }
-
-  //! Indicates whether this shader has a Fragment stage.
   const bool HasFragmentStage() const { return _fragmentShader != nullptr; }
-
-  //! Indicates whether this shader has a Geometry stage.
   const bool HasGeometryStage() const { return _geometryShader != nullptr; }
-
-  //! Indicates whether this shader has a Compute stage.
   const bool HasComputeStage() const { return _computeShader != nullptr; }
 
  private:
-  //! Create and store all of our shader modules.
   void CreateModules(bool hasVertex, bool hasFragment, bool hasGeometry, bool hasCompute);
-
-  //! Create and store our graphics pipeline.
   void CreatePipeline();
-
-  //! Destroy and clean up our graphics pipeline.
+  void CreateUniformBuffers();
+  void CreateDescriptorPool();
+  void CreateDescriptorSets();
+  void DestroyDescriptorPool();
+  void DestroyUniformBuffers();
   void DestroyPipeline();
-
-  //! Destroy and clean up all of our shader modules.
   void DestroyModules();
 
-  VulkanDevice* _device;                //!< Our parent device.
-  const char* _shaderName;              //!< Our shader name.
-  VulkanRenderPass* _renderPass;        //!< Our parent render pass.
-  U32 _stageCount;                      //!< A count of how many shader stages we have.
-  VulkanShaderModule* _vertexShader;    //!< Our vertex shader, if applicable.
-  VulkanShaderModule* _fragmentShader;  //!< Our fragment shader, if applicable.
-  VulkanShaderModule* _geometryShader;  //!< Our geometry shader, if applicable.
-  VulkanShaderModule* _computeShader;   //!< Our computer shader, if applicable.
-  VulkanPipeline* _pipeline;            //!< Our graphics pipeline.
+  VulkanDevice* _device;
+  const char* _shaderName;
+  VulkanRenderPass* _renderPass;
+  U32 _stageCount;
+  VulkanShaderModule* _vertexShader;
+  VulkanShaderModule* _fragmentShader;
+  VulkanShaderModule* _geometryShader;
+  VulkanShaderModule* _computeShader;
+  VulkanPipeline* _pipeline;
+  VkDescriptorPool m_DescriptorPool;
+  std::vector<VkDescriptorSetLayout> m_DescriptorSetLayouts;
+  std::vector<VkDescriptorSet> m_DescriptorSets;
+  std::vector<VulkanUniformBuffer> m_UniformBuffers;
+
+  static const U32 s_DescriptorPoolSize = 10;
 };
 }  // namespace Vulkan
 }  // namespace Onyx
