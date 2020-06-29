@@ -59,6 +59,8 @@ const bool Renderer::Initialize() {
   ASSERT(CreateSurface());
   ASSERT(SelectPhysicalDevice());
   Logger::Debug("Selected device: %s", vkContext.PhysicalDeviceInfo.Properties.deviceName);
+  ASSERT(CreateDevice());
+  ASSERT(GetDeviceQueues());
 
   Logger::Info("Renderer finished initialization.");
   return true;
@@ -66,6 +68,7 @@ const bool Renderer::Initialize() {
 
 void Renderer::Shutdown() {
   Logger::Info("Renderer shutting down.");
+  DestroyDevice();
   DestroySurface();
   DestroyDebugMessenger();
   DestroyInstance();
@@ -160,6 +163,45 @@ const bool Renderer::CreateSurface() {
 
   return vkContext.Surface != VK_NULL_HANDLE;
 }
+
+const bool Renderer::CreateDevice() {
+  Logger::Trace("Creating Vulkan logical device.");
+
+  std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(vkContext.PhysicalDeviceInfo.Queues.Count);
+  const float queuePriority = 1.0f;
+  for (U32 i = 0; i < vkContext.PhysicalDeviceInfo.Queues.Count; i++) {
+    queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueCreateInfos[i].queueFamilyIndex = vkContext.PhysicalDeviceInfo.Queues.Queues[i].Index;
+    queueCreateInfos[i].queueCount = 1;
+    queueCreateInfos[i].pQueuePriorities = &queuePriority;
+  }
+
+  VkPhysicalDeviceFeatures requestedFeatures{};
+
+  VkDeviceCreateInfo deviceCreateInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+  deviceCreateInfo.queueCreateInfoCount = static_cast<U32>(queueCreateInfos.size());
+  deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+  deviceCreateInfo.pEnabledFeatures = &requestedFeatures;
+
+  if (g_EnableValidation) {
+    Logger::Trace("Loading device validation layers.");
+    deviceCreateInfo.enabledLayerCount = static_cast<U32>(g_ValidationLayers.size());
+    deviceCreateInfo.ppEnabledLayerNames = g_ValidationLayers.data();
+  }
+
+  Logger::Trace("Loading %d device extensions:", g_RequiredDeviceExtensions.size());
+  for (U32 i = 0; i < g_RequiredDeviceExtensions.size(); i++) {
+    Logger::Trace(" - %s", g_RequiredDeviceExtensions[i]);
+  }
+  deviceCreateInfo.enabledExtensionCount = static_cast<U32>(g_RequiredDeviceExtensions.size());
+  deviceCreateInfo.ppEnabledExtensionNames = g_RequiredDeviceExtensions.data();
+
+  VkCall(vkCreateDevice(vkContext.PhysicalDevice, &deviceCreateInfo, nullptr, &vkContext.Device));
+
+  return vkContext.Device != VK_NULL_HANDLE;
+}
+
+void Renderer::DestroyDevice() { vkDestroyDevice(vkContext.Device, nullptr); }
 
 void Renderer::DestroySurface() {
   vkDestroySurfaceKHR(vkContext.Instance, vkContext.Surface, nullptr);
@@ -479,5 +521,19 @@ void Renderer::DumpPhysicalDeviceInfo(const VulkanPhysicalDeviceInfo& info) {
   for (const VkExtensionProperties& ext : info.Extensions) {
     Logger::Trace("---- %s", ext.extensionName);
   }
+}
+
+const bool Renderer::GetDeviceQueues() {
+  Logger::Trace("Retrieving device command queues.");
+
+  vkGetDeviceQueue(vkContext.Device, vkContext.PhysicalDeviceInfo.Queues.GraphicsIndex, 0,
+                   &vkContext.GraphicsQueue);
+  vkGetDeviceQueue(vkContext.Device, vkContext.PhysicalDeviceInfo.Queues.PresentationIndex, 0,
+                   &vkContext.PresentationQueue);
+  vkGetDeviceQueue(vkContext.Device, vkContext.PhysicalDeviceInfo.Queues.TransferIndex, 0,
+                   &vkContext.TransferQueue);
+
+  return vkContext.GraphicsQueue != VK_NULL_HANDLE &&
+         vkContext.PresentationQueue != VK_NULL_HANDLE && vkContext.TransferQueue != VK_NULL_HANDLE;
 }
 }  // namespace Onyx

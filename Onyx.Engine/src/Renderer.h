@@ -55,6 +55,10 @@ struct VulkanContext {
   std::vector<VulkanPhysicalDeviceInfo> PhysicalDevices;
   VkPhysicalDevice PhysicalDevice = VK_NULL_HANDLE;
   VulkanPhysicalDeviceInfo PhysicalDeviceInfo;
+  VkDevice Device = VK_NULL_HANDLE;
+  VkQueue GraphicsQueue = VK_NULL_HANDLE;
+  VkQueue PresentationQueue = VK_NULL_HANDLE;
+  VkQueue TransferQueue = VK_NULL_HANDLE;
 };
 
 class Renderer final {
@@ -69,8 +73,10 @@ class Renderer final {
   static const bool CreateInstance();
   static const bool CreateDebugMessenger();
   static const bool CreateSurface();
+  static const bool CreateDevice();
 
   // Object destruction
+  static void DestroyDevice();
   static void DestroySurface();
   static void DestroyDebugMessenger();
   static void DestroyInstance();
@@ -90,5 +96,6 @@ class Renderer final {
                                             std::vector<VkExtensionProperties>& extensions);
   static const bool ValidatePhysicalDevice(VulkanPhysicalDeviceInfo& deviceInfo);
   static void DumpPhysicalDeviceInfo(const VulkanPhysicalDeviceInfo& info);
+  static const bool GetDeviceQueues();
 };
 }  // namespace Onyx
