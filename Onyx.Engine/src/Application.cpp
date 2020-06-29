@@ -89,6 +89,13 @@ void Application::Run() {
   Logger::Trace("Main application loop ended.");
 }
 
+Extent2D Application::GetWindowExtent() {
+  RECT windowRect;
+  GetWindowRect(s_Window, &windowRect);
+  return {static_cast<U32>(windowRect.right) - static_cast<U32>(windowRect.left),
+          static_cast<U32>(windowRect.bottom) - static_cast<U32>(windowRect.top)};
+}
+
 void Application::ProcessEvents() {
   MSG message;
   while (PeekMessageW(&message, NULL, 0, 0, PM_REMOVE)) {

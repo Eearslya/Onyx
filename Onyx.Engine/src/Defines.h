@@ -15,6 +15,7 @@
 #define FORCENOINLINE _declspec(noinline)
 #define ALIGN(n) __declspec(align(n))
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 
 #ifdef ONYX_BUILD_LIB
 #define ONYX_API __declspec(dllexport)

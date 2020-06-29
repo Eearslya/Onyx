@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Defines.h"
+#include "Types.h"
 
 #include <Windows.h>
 
@@ -15,6 +16,7 @@ class ONYX_API Application final {
 
   static HINSTANCE GetInstance() { return s_Instance; }
   static HWND GetWindow() { return s_Window; }
+  static Extent2D GetWindowExtent();
 
  private:
   static void ProcessEvents();

@@ -59,6 +59,11 @@ struct VulkanContext {
   VkQueue GraphicsQueue = VK_NULL_HANDLE;
   VkQueue PresentationQueue = VK_NULL_HANDLE;
   VkQueue TransferQueue = VK_NULL_HANDLE;
+  VkSurfaceFormatKHR SwapchainSurfaceFormat;
+  VkPresentModeKHR SwapchainPresentMode;
+  VkExtent2D SwapchainExtent;
+  U32 SwapchainImageCount;
+  VkSwapchainKHR Swapchain = VK_NULL_HANDLE;
 };
 
 class Renderer final {
@@ -74,8 +79,10 @@ class Renderer final {
   static const bool CreateDebugMessenger();
   static const bool CreateSurface();
   static const bool CreateDevice();
+  static const bool CreateSwapchain();
 
   // Object destruction
+  static void DestroySwapchain();
   static void DestroyDevice();
   static void DestroySurface();
   static void DestroyDebugMessenger();
@@ -97,5 +104,8 @@ class Renderer final {
   static const bool ValidatePhysicalDevice(VulkanPhysicalDeviceInfo& deviceInfo);
   static void DumpPhysicalDeviceInfo(const VulkanPhysicalDeviceInfo& info);
   static const bool GetDeviceQueues();
+  static const bool GetSwapchainSurfaceFormat();
+  static const bool GetSwapchainPresentMode();
+  static const bool GetSwapchainExtent();
 };
 }  // namespace Onyx

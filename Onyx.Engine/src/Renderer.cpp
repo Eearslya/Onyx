@@ -4,6 +4,8 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_win32.h>
 
+#include <algorithm>
+
 #include "Application.h"
 #include "Logger.h"
 
@@ -61,6 +63,7 @@ const bool Renderer::Initialize() {
   Logger::Debug("Selected device: %s", vkContext.PhysicalDeviceInfo.Properties.deviceName);
   ASSERT(CreateDevice());
   ASSERT(GetDeviceQueues());
+  ASSERT(CreateSwapchain());
 
   Logger::Info("Renderer finished initialization.");
   return true;
@@ -68,6 +71,7 @@ const bool Renderer::Initialize() {
 
 void Renderer::Shutdown() {
   Logger::Info("Renderer shutting down.");
+  DestroySwapchain();
   DestroyDevice();
   DestroySurface();
   DestroyDebugMessenger();
@@ -199,6 +203,53 @@ const bool Renderer::CreateDevice() {
   VkCall(vkCreateDevice(vkContext.PhysicalDevice, &deviceCreateInfo, nullptr, &vkContext.Device));
 
   return vkContext.Device != VK_NULL_HANDLE;
+}
+
+const bool Renderer::CreateSwapchain() {
+  Logger::Trace("Creating Vulkan swapchain.");
+
+  ASSERT(GetSwapchainSurfaceFormat());
+  ASSERT(GetSwapchainPresentMode());
+  ASSERT(GetSwapchainExtent());
+  vkContext.SwapchainImageCount =
+      std::min(vkContext.PhysicalDeviceInfo.SwapchainSupport.Capabilities.minImageCount + 1,
+               vkContext.PhysicalDeviceInfo.SwapchainSupport.Capabilities.maxImageCount);
+  Logger::Trace("Swapchain will have %d images.", vkContext.SwapchainImageCount);
+
+  VkSwapchainCreateInfoKHR swapchainCreateInfo{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
+  swapchainCreateInfo.surface = vkContext.Surface;
+  swapchainCreateInfo.minImageCount = vkContext.SwapchainImageCount;
+  swapchainCreateInfo.imageFormat = vkContext.SwapchainSurfaceFormat.format;
+  swapchainCreateInfo.imageColorSpace = vkContext.SwapchainSurfaceFormat.colorSpace;
+  swapchainCreateInfo.imageExtent = vkContext.SwapchainExtent;
+  swapchainCreateInfo.imageArrayLayers = 1;
+  swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  swapchainCreateInfo.preTransform =
+      vkContext.PhysicalDeviceInfo.SwapchainSupport.Capabilities.currentTransform;
+  swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+  swapchainCreateInfo.presentMode = vkContext.SwapchainPresentMode;
+  swapchainCreateInfo.clipped = VK_TRUE;
+  swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
+
+  U32 queueFamilyIndices[] = {vkContext.PhysicalDeviceInfo.Queues.GraphicsIndex,
+                              vkContext.PhysicalDeviceInfo.Queues.PresentationIndex};
+  if (vkContext.PhysicalDeviceInfo.Queues.GraphicsIndex !=
+      vkContext.PhysicalDeviceInfo.Queues.PresentationIndex) {
+    swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+    swapchainCreateInfo.queueFamilyIndexCount = 2;
+    swapchainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+  } else {
+    swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  }
+
+  VkCall(
+      vkCreateSwapchainKHR(vkContext.Device, &swapchainCreateInfo, nullptr, &vkContext.Swapchain));
+
+  return vkContext.Swapchain != VK_NULL_HANDLE;
+}
+
+void Renderer::DestroySwapchain() {
+  vkDestroySwapchainKHR(vkContext.Device, vkContext.Swapchain, nullptr);
 }
 
 void Renderer::DestroyDevice() { vkDestroyDevice(vkContext.Device, nullptr); }
@@ -535,5 +586,49 @@ const bool Renderer::GetDeviceQueues() {
 
   return vkContext.GraphicsQueue != VK_NULL_HANDLE &&
          vkContext.PresentationQueue != VK_NULL_HANDLE && vkContext.TransferQueue != VK_NULL_HANDLE;
+}
+const bool Renderer::GetSwapchainSurfaceFormat() {
+  for (const auto& availableFormat : vkContext.PhysicalDeviceInfo.SwapchainSupport.Formats) {
+    if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
+        availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+      vkContext.SwapchainSurfaceFormat = availableFormat;
+      return true;
+    }
+  }
+
+  vkContext.SwapchainSurfaceFormat = vkContext.PhysicalDeviceInfo.SwapchainSupport.Formats[0];
+  return true;
+}
+
+const bool Renderer::GetSwapchainPresentMode() {
+  for (const auto& availablePresentMode :
+       vkContext.PhysicalDeviceInfo.SwapchainSupport.PresentationModes) {
+    if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+      vkContext.SwapchainPresentMode = availablePresentMode;
+      return true;
+    }
+  }
+
+  vkContext.SwapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+  return true;
+}
+
+const bool Renderer::GetSwapchainExtent() {
+  const VkSurfaceCapabilitiesKHR& capabilities =
+      vkContext.PhysicalDeviceInfo.SwapchainSupport.Capabilities;
+  if (capabilities.currentExtent.width != U32_MAX) {
+    vkContext.SwapchainExtent = capabilities.currentExtent;
+    return true;
+  }
+
+  Extent2D appExtent = Application::GetWindowExtent();
+  vkContext.SwapchainExtent.width =
+      std::max(capabilities.minImageExtent.width,
+               std::min(capabilities.maxImageExtent.width, appExtent.Width));
+  vkContext.SwapchainExtent.height =
+      std::max(capabilities.minImageExtent.height,
+               std::min(capabilities.maxImageExtent.height, appExtent.Height));
+
+  return true;
 }
 }  // namespace Onyx
