@@ -1,6 +1,8 @@
 #include "Renderer.h"
 
+#include <Windows.h>
 #include <vulkan/vulkan.h>
+#include <vulkan/vulkan_win32.h>
 
 #include "Application.h"
 #include "Logger.h"
@@ -9,16 +11,15 @@
   { ASSERT(result == VK_SUCCESS); }
 
 namespace Onyx {
-static struct VulkanContext {
-  VkInstance Instance = VK_NULL_HANDLE;
-  VkDebugUtilsMessengerEXT DebugMessenger = VK_NULL_HANDLE;
-} vkContext;
+static VulkanContext vkContext{};
 
 static const std::vector<const char*> g_RequiredInstanceExtensions = {"VK_KHR_surface",
                                                                       "VK_KHR_win32_surface"};
 static const std::vector<const char*> g_RequiredInstanceValidationExtensions = {
     VK_EXT_DEBUG_UTILS_EXTENSION_NAME};
 static const std::vector<const char*> g_ValidationLayers = {"VK_LAYER_KHRONOS_validation"};
+static const std::vector<const char*> g_RequiredDeviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 #ifdef ONYX_DEBUG
 static const bool g_EnableValidation = true;
@@ -55,6 +56,9 @@ const bool Renderer::Initialize() {
   if (g_EnableValidation) {
     ASSERT(CreateDebugMessenger());
   }
+  ASSERT(CreateSurface());
+  ASSERT(SelectPhysicalDevice());
+  Logger::Debug("Selected device: %s", vkContext.PhysicalDeviceInfo.Properties.deviceName);
 
   Logger::Info("Renderer finished initialization.");
   return true;
@@ -62,6 +66,7 @@ const bool Renderer::Initialize() {
 
 void Renderer::Shutdown() {
   Logger::Info("Renderer shutting down.");
+  DestroySurface();
   DestroyDebugMessenger();
   DestroyInstance();
 }
@@ -119,7 +124,6 @@ const bool Renderer::CreateInstance() {
   createInfo.ppEnabledExtensionNames = requiredExtensions.data();
 
   if (g_EnableValidation) {
-    
   }
 
   VkCall(vkCreateInstance(&createInfo, nullptr, &vkContext.Instance));
@@ -143,6 +147,22 @@ const bool Renderer::CreateDebugMessenger() {
   }
 
   return vkContext.DebugMessenger != VK_NULL_HANDLE;
+}
+
+const bool Renderer::CreateSurface() {
+  Logger::Trace("Creating Vulkan surface.");
+
+  VkWin32SurfaceCreateInfoKHR surfaceCreateInfo{VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR};
+  surfaceCreateInfo.hinstance = static_cast<HINSTANCE>(Application::GetInstance());
+  surfaceCreateInfo.hwnd = static_cast<HWND>(Application::GetWindow());
+  VkCall(
+      vkCreateWin32SurfaceKHR(vkContext.Instance, &surfaceCreateInfo, nullptr, &vkContext.Surface));
+
+  return vkContext.Surface != VK_NULL_HANDLE;
+}
+
+void Renderer::DestroySurface() {
+  vkDestroySurfaceKHR(vkContext.Instance, vkContext.Surface, nullptr);
 }
 
 void Renderer::DestroyDebugMessenger() {
@@ -213,5 +233,251 @@ void Renderer::FillDebugMessengerInfo(VkDebugUtilsMessengerCreateInfoEXT& create
   createInfo.pfnUserCallback = VulkanDebugCallback;
   createInfo.pNext = nullptr;
   createInfo.pUserData = nullptr;
+}
+
+const bool Renderer::SelectPhysicalDevice() {
+  Logger::Trace("Enumerating Vulkan physical devices.");
+
+  U32 deviceCount = 0;
+  VkCall(vkEnumeratePhysicalDevices(vkContext.Instance, &deviceCount, nullptr));
+  if (deviceCount == 0) {
+    Logger::Fatal("No Vulkan devices could be found!");
+    return false;
+  }
+  Logger::Trace("Found %d Vulkan devices.", deviceCount);
+  std::vector<VkPhysicalDevice> devices(deviceCount);
+  VkCall(vkEnumeratePhysicalDevices(vkContext.Instance, &deviceCount, devices.data()));
+
+  vkContext.PhysicalDevices.resize(deviceCount);
+  for (U32 i = 0; i < deviceCount; i++) {
+    vkContext.PhysicalDevices[i].Device = devices[i];
+    QueryPhysicalDeviceInfo(devices[i], vkContext.PhysicalDevices[i]);
+    DumpPhysicalDeviceInfo(vkContext.PhysicalDevices[i]);
+  }
+
+  for (U32 i = 0; i < deviceCount; i++) {
+    if (ValidatePhysicalDevice(vkContext.PhysicalDevices[i])) {
+      vkContext.PhysicalDevice = vkContext.PhysicalDevices[i].Device;
+      vkContext.PhysicalDeviceInfo = vkContext.PhysicalDevices[i];
+    }
+  }
+
+  return vkContext.PhysicalDevice != VK_NULL_HANDLE;
+}
+
+void Renderer::QueryPhysicalDeviceInfo(VkPhysicalDevice device,
+                                       VulkanPhysicalDeviceInfo& deviceInfo) {
+  vkGetPhysicalDeviceFeatures(device, &deviceInfo.Features);
+  vkGetPhysicalDeviceMemoryProperties(device, &deviceInfo.Memory);
+  vkGetPhysicalDeviceProperties(device, &deviceInfo.Properties);
+  QueryPhysicalDeviceQueues(device, deviceInfo.Queues);
+  QueryPhysicalDeviceSwapchainSupport(device, deviceInfo.SwapchainSupport);
+  QueryPhysicalDeviceExtensions(device, deviceInfo.Extensions);
+}
+
+void Renderer::QueryPhysicalDeviceQueues(VkPhysicalDevice device,
+                                         VulkanPhysicalDeviceQueues& queueInfo) {
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueInfo.Count, nullptr);
+  std::vector<VkQueueFamilyProperties> families(queueInfo.Count);
+  queueInfo.Queues.resize(queueInfo.Count);
+  vkGetPhysicalDeviceQueueFamilyProperties(device, &queueInfo.Count, families.data());
+
+  for (U32 i = 0; i < queueInfo.Count; i++) {
+    VulkanPhysicalDeviceQueue& queue = queueInfo.Queues[i];
+    queue.Index = i;
+    queue.Flags = families[i].queueFlags;
+    queue.Count = families[i].queueCount;
+    vkGetPhysicalDeviceSurfaceSupportKHR(device, i, vkContext.Surface, &queue.PresentKHR);
+
+    if (queueInfo.GraphicsIndex == -1 && queue.SupportsGraphics()) {
+      queueInfo.GraphicsIndex = i;
+    }
+    if (queueInfo.PresentationIndex == -1 && queue.SupportsPresentation()) {
+      queueInfo.PresentationIndex = i;
+    }
+
+    if (queue.SupportsCompute() &&
+        (queueInfo.ComputeIndex == -1 || queueInfo.ComputeIndex == queueInfo.GraphicsIndex)) {
+      queueInfo.ComputeIndex = i;
+    }
+    if (queue.SupportsTransfer() &&
+        (queueInfo.TransferIndex == -1 || queueInfo.TransferIndex == queueInfo.GraphicsIndex)) {
+      queueInfo.TransferIndex = i;
+    }
+  }
+
+  if (queueInfo.TransferIndex == -1) {
+    queueInfo.TransferIndex = queueInfo.GraphicsIndex;
+  }
+}
+
+void Renderer::QueryPhysicalDeviceSwapchainSupport(VkPhysicalDevice device,
+                                                   VulkanPhysicalDeviceSwapchainSupport& support) {
+  VkCall(
+      vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, vkContext.Surface, &support.Capabilities));
+
+  U32 formatCount = 0;
+  VkCall(vkGetPhysicalDeviceSurfaceFormatsKHR(device, vkContext.Surface, &formatCount, nullptr));
+  if (formatCount != 0) {
+    support.Formats.resize(formatCount);
+    VkCall(vkGetPhysicalDeviceSurfaceFormatsKHR(device, vkContext.Surface, &formatCount,
+                                                support.Formats.data()));
+  }
+
+  U32 presentModeCount = 0;
+  VkCall(vkGetPhysicalDeviceSurfacePresentModesKHR(device, vkContext.Surface, &presentModeCount,
+                                                   nullptr));
+  if (presentModeCount != 0) {
+    support.PresentationModes.resize(presentModeCount);
+    VkCall(vkGetPhysicalDeviceSurfacePresentModesKHR(device, vkContext.Surface, &presentModeCount,
+                                                     support.PresentationModes.data()));
+  }
+}
+
+void Renderer::QueryPhysicalDeviceExtensions(VkPhysicalDevice device,
+                                             std::vector<VkExtensionProperties>& extensions) {
+  U32 extensionCount = 0;
+  VkCall(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr));
+  if (extensionCount != 0) {
+    extensions.resize(extensionCount);
+    VkCall(
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, extensions.data()));
+  }
+}
+
+const bool Renderer::ValidatePhysicalDevice(VulkanPhysicalDeviceInfo& deviceInfo) {
+  if (deviceInfo.Queues.GraphicsIndex == -1 || deviceInfo.Queues.PresentationIndex == -1) {
+    Logger::Trace("Rejecting device: Missing graphics or presentation queue.");
+    return false;
+  }
+
+  for (U32 i = 0; i < g_RequiredDeviceExtensions.size(); i++) {
+    bool found = false;
+    for (U32 j = 0; j < deviceInfo.Extensions.size(); j++) {
+      if (strcmp(g_RequiredDeviceExtensions[i], deviceInfo.Extensions[j].extensionName) == 0) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      Logger::Trace("Rejecting device: Failed to find required extension \"%s\"",
+                    g_RequiredDeviceExtensions[i]);
+      return false;
+    }
+  }
+
+  if (deviceInfo.SwapchainSupport.Formats.size() == 0 ||
+      deviceInfo.SwapchainSupport.PresentationModes.size() == 0) {
+    Logger::Trace("Rejecting device: No available image formats or presentation modes.");
+    return false;
+  }
+
+  return true;
+}
+
+void Renderer::DumpPhysicalDeviceInfo(const VulkanPhysicalDeviceInfo& info) {
+  Logger::Trace("Vulkan Device \"%s\":", info.Properties.deviceName);
+
+  // General device details
+  Logger::Trace(" - Vulkan API: %d.%d.%d", VK_VERSION_MAJOR(info.Properties.apiVersion),
+                VK_VERSION_MINOR(info.Properties.apiVersion),
+                VK_VERSION_PATCH(info.Properties.apiVersion));
+  switch (info.Properties.deviceType) {
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+      Logger::Trace(" - Device Type: Dedicated");
+      break;
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+      Logger::Trace(" - Device Type: Integrated");
+      break;
+    case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+      Logger::Trace(" - Device Type: Virtual");
+      break;
+    case VK_PHYSICAL_DEVICE_TYPE_CPU:
+      Logger::Trace(" - Device Type: CPU");
+      break;
+    default:
+      Logger::Trace(" - Device Type: Unknown");
+      break;
+  }
+  Logger::Trace(" - Max 2D Resolution: %d", info.Properties.limits.maxImageDimension2D);
+
+  // Memory Details
+  Logger::Trace(" - Memory:");
+  Logger::Trace("   - Types (%d):", info.Memory.memoryTypeCount);
+  // DL = Device Local
+  // HV = Host Visible
+  // HC = Host Coherent
+  // HH = Host Cached
+  // LA = Lazily Allocated
+  // PT = Protected
+  // DC = Device Coherent (AMD)
+  // DU = Device Uncached (AMD)
+  Logger::Trace("               / DL | HV | HC | HH | LA | PT | DC | DU \\");
+  for (U32 memoryTypeIndex = 0; memoryTypeIndex < info.Memory.memoryTypeCount; memoryTypeIndex++) {
+    const VkMemoryType& memType = info.Memory.memoryTypes[memoryTypeIndex];
+    Logger::Trace("     - Heap %d: | %s | %s | %s | %s | %s | %s | %s | %s |", memType.heapIndex,
+                  memType.propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ? "DL" : "  ",
+                  memType.propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ? "HV" : "  ",
+                  memType.propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ? "HC" : "  ",
+                  memType.propertyFlags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT ? "HH" : "  ",
+                  memType.propertyFlags & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT ? "LA" : "  ",
+                  memType.propertyFlags & VK_MEMORY_PROPERTY_PROTECTED_BIT ? "PT" : "  ",
+                  memType.propertyFlags & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD ? "DC" : "  ",
+                  memType.propertyFlags & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD ? "DU" : "  ");
+  }
+  Logger::Trace("   - Heaps (%d):", info.Memory.memoryHeapCount);
+  for (U32 memoryHeapIndex = 0; memoryHeapIndex < info.Memory.memoryHeapCount; memoryHeapIndex++) {
+    const VkMemoryHeap& memHeap = info.Memory.memoryHeaps[memoryHeapIndex];
+    // DL = Device Local
+    // MI = Multi Instance
+    // MI = Multi Instance (KHR)
+    Logger::Trace("     - Heap %d: %.2f MiB { %s | %s | %s }", memoryHeapIndex,
+                  ((F32)memHeap.size / 1024.0f / 1024.0f),
+                  memHeap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT ? "DL" : "  ",
+                  memHeap.flags & VK_MEMORY_HEAP_MULTI_INSTANCE_BIT ? "MI" : "  ",
+                  memHeap.flags & VK_MEMORY_HEAP_MULTI_INSTANCE_BIT_KHR ? "MK" : "  ");
+  }
+
+  Logger::Trace(" - Queue Families (%d):", info.Queues.Count);
+  // GFX = Graphics
+  // CMP = Compute
+  // TRA = Transfer
+  // SPB = Sparse Binding
+  // PRT = Protected
+  // PST = Presentation (KHR)
+  Logger::Trace("               / GFX  | CMP  | TRA  | SPB  | PRT  | PST  \\");
+  const VulkanPhysicalDeviceQueues& queues = info.Queues;
+  for (U32 queueIndex = 0; queueIndex < info.Queues.Count; queueIndex++) {
+    const VulkanPhysicalDeviceQueue& queue = info.Queues.Queues[queueIndex];
+    // Asterisk indicates the Queue Family has been selected for that particular queue operation.
+    Logger::Trace(
+        " - Family %d: { %s%c | %s%c | %s%c | %s%c | %s%c | %s%c } (%d Queues)", queueIndex,
+        queue.SupportsGraphics() ? "GFX" : "   ", queues.GraphicsIndex == queue.Index ? '*' : ' ',
+        queue.SupportsCompute() ? "CMP" : "   ", queues.ComputeIndex == queue.Index ? '*' : ' ',
+        queue.SupportsTransfer() ? "TRA" : "   ", queues.TransferIndex == queue.Index ? '*' : ' ',
+        queue.SupportsSparseBinding() ? "SPB" : "   ", ' ',
+        queue.SupportsProtected() ? "PRT" : "   ", ' ',
+        queue.SupportsPresentation() ? "PST" : "   ",
+        queues.PresentationIndex == queue.Index ? '*' : ' ', queue.Count);
+  }
+
+  // Swapchain details
+  Logger::Trace("-- Swapchain:");
+  Logger::Trace("---- Image Count: %d Min / %d Max",
+                info.SwapchainSupport.Capabilities.minImageCount,
+                info.SwapchainSupport.Capabilities.maxImageCount);
+  Logger::Trace("---- Image Size: %dx%d Min / %dx%d Max",
+                info.SwapchainSupport.Capabilities.minImageExtent.width,
+                info.SwapchainSupport.Capabilities.minImageExtent.height,
+                info.SwapchainSupport.Capabilities.maxImageExtent.width,
+                info.SwapchainSupport.Capabilities.maxImageExtent.height);
+  Logger::Trace("---- Image Formats: %d", info.SwapchainSupport.Formats.size());
+  Logger::Trace("---- Present Modes: %d", info.SwapchainSupport.PresentationModes.size());
+
+  // Extensions
+  Logger::Trace("-- Extensions (%d):", info.Extensions.size());
+  for (const VkExtensionProperties& ext : info.Extensions) {
+    Logger::Trace("---- %s", ext.extensionName);
+  }
 }
 }  // namespace Onyx
