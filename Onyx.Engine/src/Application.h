@@ -8,6 +8,8 @@ namespace Onyx {
 class ONYX_API Application final {
  public:
   static const bool Initialize();
+  static void Shutdown();
+
   static void Run();
   static void RequestClose();
 

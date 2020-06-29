@@ -1,6 +1,7 @@
 #include "Application.h"
 
 #include "Logger.h"
+#include "Renderer.h"
 
 namespace Onyx {
 HINSTANCE Application::s_Instance;
@@ -55,15 +56,35 @@ const bool Application::Initialize() {
 
   s_Window = CreateWindowExW(windowExStyle, g_WindowClassName, L"Onyx", windowStyle, windowX,
                              windowY, windowW, windowH, nullptr, nullptr, s_Instance, nullptr);
+  if (!s_Window) {
+    Logger::Fatal("Failed to create application window!");
+    ASSERT(false);
+  }
+
   ShowWindow(s_Window, SW_SHOW);
+
+  if (!Renderer::Initialize()) {
+    Logger::Fatal("Failed to initialize application renderer!");
+    ASSERT(false);
+  }
 
   return true;
 }
+
+void Application::Shutdown() { Renderer::Shutdown(); }
 
 void Application::Run() {
   Logger::Trace("Beginning main application loop.");
   while (!s_CloseRequested) {
     ProcessEvents();
+
+    if (Renderer::PrepareFrame()) {
+      if (!Renderer::Frame()) {
+        Logger::Error("Error during frame draw!");
+      }
+    } else {
+      Logger::Error("Error during frame prep!");
+    }
   }
   Logger::Trace("Main application loop ended.");
 }
