@@ -5,6 +5,7 @@
 #include <vulkan/vulkan_win32.h>
 
 #include <algorithm>
+#include <set>
 
 #include "Application.h"
 #include "Logger.h"
@@ -307,14 +308,17 @@ const bool Renderer::CreateSwapchain() {
   swapchainCreateInfo.clipped = VK_TRUE;
   swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-  U32 queueFamilyIndices[] = {
-      static_cast<U32>(vkContext.PhysicalDeviceInfo.Queues.GraphicsIndex),
-      static_cast<U32>(vkContext.PhysicalDeviceInfo.Queues.PresentationIndex)};
-  if (vkContext.PhysicalDeviceInfo.Queues.GraphicsIndex !=
-      vkContext.PhysicalDeviceInfo.Queues.PresentationIndex) {
+  std::set<U32> uniqueQueueFamilyIndices;
+  uniqueQueueFamilyIndices.insert(vkContext.PhysicalDeviceInfo.Queues.GraphicsIndex);
+  uniqueQueueFamilyIndices.insert(vkContext.PhysicalDeviceInfo.Queues.TransferIndex);
+  uniqueQueueFamilyIndices.insert(vkContext.PhysicalDeviceInfo.Queues.PresentationIndex);
+
+  std::vector<U32> queueFamilyIndices(uniqueQueueFamilyIndices.begin(),
+                                      uniqueQueueFamilyIndices.end());
+  if (queueFamilyIndices.size() > 1) {
     swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-    swapchainCreateInfo.queueFamilyIndexCount = 2;
-    swapchainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+    swapchainCreateInfo.queueFamilyIndexCount = static_cast<U32>(queueFamilyIndices.size());
+    swapchainCreateInfo.pQueueFamilyIndices = queueFamilyIndices.data();
   } else {
     swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
   }
@@ -596,34 +600,25 @@ const bool Renderer::CreateFramebuffers() {
 }
 
 const bool Renderer::CreateVertexBuffer() {
-  VkBufferCreateInfo bufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
-  bufferCreateInfo.size = sizeof(g_Vertices[0]) * g_Vertices.size();
-  bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-  bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  VkCall(vkCreateBuffer(vkContext.Device, &bufferCreateInfo, nullptr, &vkContext.VertexBuffer));
-  if (vkContext.VertexBuffer == VK_NULL_HANDLE) {
-    return false;
-  }
+  VkDeviceSize bufferSize = sizeof(g_Vertices[0]) * g_Vertices.size();
 
-  VkMemoryRequirements memoryRequirements;
-  vkGetBufferMemoryRequirements(vkContext.Device, vkContext.VertexBuffer, &memoryRequirements);
-
-  VkMemoryAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
-  allocateInfo.allocationSize = memoryRequirements.size;
-  allocateInfo.memoryTypeIndex =
-      FindMemoryType(memoryRequirements.memoryTypeBits,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-  VkCall(vkAllocateMemory(vkContext.Device, &allocateInfo, nullptr, &vkContext.VertexBufferMemory));
-  if (vkContext.VertexBufferMemory == VK_NULL_HANDLE) {
-    return false;
-  }
-
-  vkBindBufferMemory(vkContext.Device, vkContext.VertexBuffer, vkContext.VertexBufferMemory, 0);
-
+  VkBuffer stagingBuffer;
+  VkDeviceMemory stagingDeviceMemory;
+  ASSERT(CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                      stagingBuffer, stagingDeviceMemory));
   void* data;
-  vkMapMemory(vkContext.Device, vkContext.VertexBufferMemory, 0, bufferCreateInfo.size, 0, &data);
-  memcpy(data, g_Vertices.data(), static_cast<size_t>(bufferCreateInfo.size));
-  vkUnmapMemory(vkContext.Device, vkContext.VertexBufferMemory);
+  vkMapMemory(vkContext.Device, stagingDeviceMemory, 0, bufferSize, 0, &data);
+  memcpy(data, g_Vertices.data(), static_cast<size_t>(bufferSize));
+  vkUnmapMemory(vkContext.Device, stagingDeviceMemory);
+
+  ASSERT(CreateBuffer(
+      bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkContext.VertexBuffer, vkContext.VertexBufferMemory));
+  CopyBuffer(stagingBuffer, vkContext.VertexBuffer, bufferSize);
+
+  vkDestroyBuffer(vkContext.Device, stagingBuffer, nullptr);
+  vkFreeMemory(vkContext.Device, stagingDeviceMemory, nullptr);
 
   return true;
 }
@@ -637,6 +632,13 @@ const bool Renderer::CreateCommandPools() {
 
   VkCall(vkCreateCommandPool(vkContext.Device, &graphicsPoolCreateInfo, nullptr,
                              &vkContext.GraphicsCommandPool));
+
+  VkCommandPoolCreateInfo transferPoolCreateInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+  transferPoolCreateInfo.queueFamilyIndex = vkContext.PhysicalDeviceInfo.Queues.TransferIndex;
+  transferPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+  VkCall(vkCreateCommandPool(vkContext.Device, &transferPoolCreateInfo, nullptr,
+                             &vkContext.TransferCommandPool));
 
   return vkContext.GraphicsCommandPool != VK_NULL_HANDLE;
 }
@@ -727,6 +729,7 @@ void Renderer::FreeGraphicsCommandBuffers() {
 }
 
 void Renderer::DestroyCommandPools() {
+  vkDestroyCommandPool(vkContext.Device, vkContext.TransferCommandPool, nullptr);
   vkDestroyCommandPool(vkContext.Device, vkContext.GraphicsCommandPool, nullptr);
 }
 
@@ -1150,9 +1153,9 @@ const bool Renderer::GetSwapchainExtent() {
   return true;
 }
 
-void Renderer::BeginCommandBuffer(VkCommandBuffer buffer) {
+void Renderer::BeginCommandBuffer(VkCommandBuffer buffer, bool transient) {
   VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-  beginInfo.flags = 0;
+  beginInfo.flags = transient ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : 0;
   beginInfo.pInheritanceInfo = nullptr;
 
   VkCall(vkBeginCommandBuffer(buffer, &beginInfo));
@@ -1201,5 +1204,59 @@ U32 Renderer::FindMemoryType(U32 typeFilter, VkMemoryPropertyFlags properties) {
 
   ASSERT_MSG(false, "Failed to find valid memory type!");
   return 0;
+}
+
+const bool Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
+                                  VkMemoryPropertyFlags properties, VkBuffer& buffer,
+                                  VkDeviceMemory& deviceMemory) {
+  VkBufferCreateInfo bufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+  bufferCreateInfo.size = size;
+  bufferCreateInfo.usage = usage;
+  bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  VkCall(vkCreateBuffer(vkContext.Device, &bufferCreateInfo, nullptr, &buffer));
+  if (buffer == VK_NULL_HANDLE) {
+    return false;
+  }
+
+  VkMemoryRequirements memoryRequirements;
+  vkGetBufferMemoryRequirements(vkContext.Device, buffer, &memoryRequirements);
+
+  VkMemoryAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+  allocateInfo.allocationSize = memoryRequirements.size;
+  allocateInfo.memoryTypeIndex = FindMemoryType(memoryRequirements.memoryTypeBits, properties);
+  VkCall(vkAllocateMemory(vkContext.Device, &allocateInfo, nullptr, &deviceMemory));
+  if (deviceMemory == VK_NULL_HANDLE) {
+    return false;
+  }
+
+  vkBindBufferMemory(vkContext.Device, buffer, deviceMemory, 0);
+
+  return true;
+}
+
+void Renderer::CopyBuffer(VkBuffer source, VkBuffer destination, VkDeviceSize size) {
+  VkCommandBufferAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+  allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocateInfo.commandPool = vkContext.TransferCommandPool;
+  allocateInfo.commandBufferCount = 1;
+
+  VkCommandBuffer commandBuffer;
+  vkAllocateCommandBuffers(vkContext.Device, &allocateInfo, &commandBuffer);
+
+  BeginCommandBuffer(commandBuffer, true);
+  VkBufferCopy copyRegion{};
+  copyRegion.srcOffset = 0;
+  copyRegion.dstOffset = 0;
+  copyRegion.size = size;
+  vkCmdCopyBuffer(commandBuffer, source, destination, 1, &copyRegion);
+  EndCommandBuffer(commandBuffer);
+
+  VkSubmitInfo submitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &commandBuffer;
+
+  vkQueueSubmit(vkContext.TransferQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(vkContext.TransferQueue);
+  vkFreeCommandBuffers(vkContext.Device, vkContext.TransferCommandPool, 1, &commandBuffer);
 }
 }  // namespace Onyx

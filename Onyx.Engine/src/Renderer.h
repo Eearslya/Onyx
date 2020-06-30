@@ -99,6 +99,7 @@ struct VulkanContext {
   VkPipeline GraphicsPipeline = VK_NULL_HANDLE;
   std::vector<VkFramebuffer> SwapchainFramebuffers;
   VkCommandPool GraphicsCommandPool = VK_NULL_HANDLE;
+  VkCommandPool TransferCommandPool = VK_NULL_HANDLE;
   std::vector<VkCommandBuffer> GraphicsCommandBuffers;
   std::vector<VkSemaphore> ImageAvailableSemaphores;
   std::vector<VkSemaphore> RenderFinishedSemaphores;
@@ -171,7 +172,7 @@ class Renderer final {
   static const bool GetSwapchainSurfaceFormat();
   static const bool GetSwapchainPresentMode();
   static const bool GetSwapchainExtent();
-  static void BeginCommandBuffer(VkCommandBuffer buffer);
+  static void BeginCommandBuffer(VkCommandBuffer buffer, bool transient = false);
   static void BeginRenderPass(VkCommandBuffer buffer, VkFramebuffer framebuffer);
   static void BindGraphicsPipeline(VkCommandBuffer buffer);
   static void BindVertexBuffers(VkCommandBuffer buffer, std::vector<VkBuffer> buffers,
@@ -181,5 +182,9 @@ class Renderer final {
   static void EndRenderPass(VkCommandBuffer buffer);
   static void EndCommandBuffer(VkCommandBuffer buffer);
   static U32 FindMemoryType(U32 typeFilter, VkMemoryPropertyFlags properties);
+  static const bool CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
+                                 VkMemoryPropertyFlags properties, VkBuffer& buffer,
+                                 VkDeviceMemory& deviceMemory);
+  static void CopyBuffer(VkBuffer source, VkBuffer destination, VkDeviceSize size);
 };
 }  // namespace Onyx
