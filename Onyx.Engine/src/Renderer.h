@@ -64,6 +64,8 @@ struct VulkanContext {
   VkExtent2D SwapchainExtent;
   U32 SwapchainImageCount;
   VkSwapchainKHR Swapchain = VK_NULL_HANDLE;
+  std::vector<VkImage> SwapchainImages;
+  std::vector<VkImageView> SwapchainImageViews;
 };
 
 class Renderer final {
@@ -80,8 +82,10 @@ class Renderer final {
   static const bool CreateSurface();
   static const bool CreateDevice();
   static const bool CreateSwapchain();
+  static const bool CreateSwapchainImages();
 
   // Object destruction
+  static void DestroySwapchainImages();
   static void DestroySwapchain();
   static void DestroyDevice();
   static void DestroySurface();

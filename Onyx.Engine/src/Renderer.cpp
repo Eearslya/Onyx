@@ -64,6 +64,7 @@ const bool Renderer::Initialize() {
   ASSERT(CreateDevice());
   ASSERT(GetDeviceQueues());
   ASSERT(CreateSwapchain());
+  ASSERT(CreateSwapchainImages());
 
   Logger::Info("Renderer finished initialization.");
   return true;
@@ -71,6 +72,7 @@ const bool Renderer::Initialize() {
 
 void Renderer::Shutdown() {
   Logger::Info("Renderer shutting down.");
+  DestroySwapchainImages();
   DestroySwapchain();
   DestroyDevice();
   DestroySurface();
@@ -231,8 +233,9 @@ const bool Renderer::CreateSwapchain() {
   swapchainCreateInfo.clipped = VK_TRUE;
   swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-  U32 queueFamilyIndices[] = {vkContext.PhysicalDeviceInfo.Queues.GraphicsIndex,
-                              vkContext.PhysicalDeviceInfo.Queues.PresentationIndex};
+  U32 queueFamilyIndices[] = {
+      static_cast<U32>(vkContext.PhysicalDeviceInfo.Queues.GraphicsIndex),
+      static_cast<U32>(vkContext.PhysicalDeviceInfo.Queues.PresentationIndex)};
   if (vkContext.PhysicalDeviceInfo.Queues.GraphicsIndex !=
       vkContext.PhysicalDeviceInfo.Queues.PresentationIndex) {
     swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
@@ -246,6 +249,45 @@ const bool Renderer::CreateSwapchain() {
       vkCreateSwapchainKHR(vkContext.Device, &swapchainCreateInfo, nullptr, &vkContext.Swapchain));
 
   return vkContext.Swapchain != VK_NULL_HANDLE;
+}
+
+const bool Renderer::CreateSwapchainImages() {
+  Logger::Trace("Creating swapchain images and image views.");
+  VkCall(vkGetSwapchainImagesKHR(vkContext.Device, vkContext.Swapchain,
+                                 &vkContext.SwapchainImageCount, nullptr));
+  vkContext.SwapchainImages.resize(vkContext.SwapchainImageCount);
+  vkContext.SwapchainImageViews.resize(vkContext.SwapchainImageCount);
+  VkCall(vkGetSwapchainImagesKHR(vkContext.Device, vkContext.Swapchain,
+                                 &vkContext.SwapchainImageCount, vkContext.SwapchainImages.data()));
+
+  for (U32 i = 0; i < vkContext.SwapchainImageCount; i++) {
+    VkImageViewCreateInfo imageViewCreateInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+    imageViewCreateInfo.image = vkContext.SwapchainImages[i];
+    imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    imageViewCreateInfo.format = vkContext.SwapchainSurfaceFormat.format;
+    imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+    imageViewCreateInfo.subresourceRange.levelCount = 1;
+    imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+    imageViewCreateInfo.subresourceRange.layerCount = 1;
+    VkCall(vkCreateImageView(vkContext.Device, &imageViewCreateInfo, nullptr,
+                             &vkContext.SwapchainImageViews[i]));
+    if (vkContext.SwapchainImageViews[i] == VK_NULL_HANDLE) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void Renderer::DestroySwapchainImages() {
+  for (VkImageView imageView : vkContext.SwapchainImageViews) {
+    vkDestroyImageView(vkContext.Device, imageView, nullptr);
+  }
 }
 
 void Renderer::DestroySwapchain() {
