@@ -68,6 +68,7 @@ const bool Renderer::Initialize() {
   ASSERT(CreateSwapchainImages());
   ASSERT(CreateRenderPass());
   ASSERT(CreateGraphicsPipeline());
+  ASSERT(CreateFramebuffers());
 
   Logger::Info("Renderer finished initialization.");
   return true;
@@ -75,6 +76,7 @@ const bool Renderer::Initialize() {
 
 void Renderer::Shutdown() {
   Logger::Info("Renderer shutting down.");
+  DestroyFramebuffers();
   DestroyGraphicsPipeline();
   DestroyRenderPass();
   DestroySwapchainImages();
@@ -484,6 +486,38 @@ VkShaderModule Renderer::CreateShaderModule(const std::vector<char>& source) {
   VkShaderModule module;
   VkCall(vkCreateShaderModule(vkContext.Device, &shaderCreateInfo, nullptr, &module));
   return module;
+}
+
+const bool Renderer::CreateFramebuffers() {
+  Logger::Trace("Creating framebuffers.");
+
+  vkContext.SwapchainFramebuffers.resize(vkContext.SwapchainImageCount, VK_NULL_HANDLE);
+
+  for (U32 i = 0; i < vkContext.SwapchainImageCount; i++) {
+    VkImageView attachments[] = {vkContext.SwapchainImageViews[i]};
+
+    VkFramebufferCreateInfo framebufferCreateInfo{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+    framebufferCreateInfo.renderPass = vkContext.RenderPass;
+    framebufferCreateInfo.attachmentCount = 1;
+    framebufferCreateInfo.pAttachments = attachments;
+    framebufferCreateInfo.width = vkContext.SwapchainExtent.width;
+    framebufferCreateInfo.height = vkContext.SwapchainExtent.height;
+    framebufferCreateInfo.layers = 1;
+
+    VkCall(vkCreateFramebuffer(vkContext.Device, &framebufferCreateInfo, nullptr,
+                               &vkContext.SwapchainFramebuffers[i]));
+    if (vkContext.SwapchainFramebuffers[i] == VK_NULL_HANDLE) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void Renderer::DestroyFramebuffers() {
+  for (VkFramebuffer framebuffer : vkContext.SwapchainFramebuffers) {
+    vkDestroyFramebuffer(vkContext.Device, framebuffer, nullptr);
+  }
 }
 
 void Renderer::DestroyShaderModule(VkShaderModule module) {

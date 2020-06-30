@@ -69,6 +69,7 @@ struct VulkanContext {
   VkRenderPass RenderPass = VK_NULL_HANDLE;
   VkPipelineLayout PipelineLayout = VK_NULL_HANDLE;
   VkPipeline GraphicsPipeline = VK_NULL_HANDLE;
+  std::vector<VkFramebuffer> SwapchainFramebuffers;
 };
 
 class Renderer final {
@@ -89,8 +90,10 @@ class Renderer final {
   static const bool CreateRenderPass();
   static const bool CreateGraphicsPipeline();
   static VkShaderModule CreateShaderModule(const std::vector<char>& source);
+  static const bool CreateFramebuffers();
 
   // Object destruction
+  static void DestroyFramebuffers();
   static void DestroyShaderModule(VkShaderModule module);
   static void DestroyGraphicsPipeline();
   static void DestroyRenderPass();
