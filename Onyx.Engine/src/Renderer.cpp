@@ -26,9 +26,11 @@ static const std::vector<const char*> g_RequiredDeviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 static const U32 g_MaxFramesInFlight = 2;
 
-static const std::vector<Vertex> g_Vertices = {{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-                                               {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-                                               {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+static const std::vector<Vertex> g_Vertices = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+                                               {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+                                               {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+                                               {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
+static const std::vector<U16> g_Indices = {0, 1, 2, 2, 3, 0};
 
 #ifdef ONYX_DEBUG
 static const bool g_EnableValidation = true;
@@ -73,6 +75,7 @@ const bool Renderer::Initialize() {
   ASSERT(CreateCommandPools());
   ASSERT(CreateSwapchainObjects());
   ASSERT(CreateVertexBuffer());
+  ASSERT(CreateIndexBuffer());
 
   Logger::Info("Renderer finished initialization.");
   return true;
@@ -82,6 +85,7 @@ void Renderer::Shutdown() {
   Logger::Info("Renderer shutting down.");
   vkDeviceWaitIdle(vkContext.Device);
 
+  DestroyIndexBuffer();
   DestroyVertexBuffer();
   DestroySwapchainObjects();
   DestroyCommandPools();
@@ -117,7 +121,8 @@ const bool Renderer::Frame() {
   BeginRenderPass(cmdBuf, vkContext.SwapchainFramebuffers[imageIndex]);
   BindGraphicsPipeline(cmdBuf);
   BindVertexBuffers(cmdBuf, {vkContext.VertexBuffer}, {0});
-  Draw(cmdBuf, 3, 1, 0, 0);
+  BindIndexBuffer(cmdBuf, vkContext.IndexBuffer, 0);
+  DrawIndexed(cmdBuf, static_cast<U32>(g_Indices.size()), 1, 0, 0, 0);
   EndRenderPass(cmdBuf);
   EndCommandBuffer(cmdBuf);
 
@@ -623,6 +628,30 @@ const bool Renderer::CreateVertexBuffer() {
   return true;
 }
 
+const bool Renderer::CreateIndexBuffer() {
+  VkDeviceSize bufferSize = sizeof(g_Indices[0]) * g_Indices.size();
+
+  VkBuffer stagingBuffer;
+  VkDeviceMemory stagingDeviceMemory;
+  ASSERT(CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                      stagingBuffer, stagingDeviceMemory));
+  void* data;
+  vkMapMemory(vkContext.Device, stagingDeviceMemory, 0, bufferSize, 0, &data);
+  memcpy(data, g_Indices.data(), static_cast<size_t>(bufferSize));
+  vkUnmapMemory(vkContext.Device, stagingDeviceMemory);
+
+  ASSERT(CreateBuffer(
+      bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkContext.IndexBuffer, vkContext.IndexBufferMemory));
+  CopyBuffer(stagingBuffer, vkContext.IndexBuffer, bufferSize);
+
+  vkDestroyBuffer(vkContext.Device, stagingBuffer, nullptr);
+  vkFreeMemory(vkContext.Device, stagingDeviceMemory, nullptr);
+
+  return true;
+}
+
 const bool Renderer::CreateCommandPools() {
   Logger::Trace("Creating command pools.");
 
@@ -715,6 +744,11 @@ void Renderer::DestroySyncObjects() {
     vkDestroySemaphore(vkContext.Device, vkContext.RenderFinishedSemaphores[i], nullptr);
     vkDestroySemaphore(vkContext.Device, vkContext.ImageAvailableSemaphores[i], nullptr);
   }
+}
+
+void Renderer::DestroyIndexBuffer() {
+  vkDestroyBuffer(vkContext.Device, vkContext.IndexBuffer, nullptr);
+  vkFreeMemory(vkContext.Device, vkContext.IndexBufferMemory, nullptr);
 }
 
 void Renderer::DestroyVertexBuffer() {
@@ -1185,9 +1219,18 @@ void Renderer::BindVertexBuffers(VkCommandBuffer buffer, std::vector<VkBuffer> b
                          offsets.data());
 }
 
+void Renderer::BindIndexBuffer(VkCommandBuffer buffer, VkBuffer indexBuffer, U32 firstIndex) {
+  vkCmdBindIndexBuffer(buffer, indexBuffer, firstIndex, VK_INDEX_TYPE_UINT16);
+}
+
 void Renderer::Draw(VkCommandBuffer buffer, U32 vertexCount, U32 instanceCount, U32 firstVertex,
                     U32 firstInstance) {
   vkCmdDraw(buffer, vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
+void Renderer::DrawIndexed(VkCommandBuffer buffer, U32 indexCount, U32 instanceCount,
+                           U32 firstIndex, U32 indexOffset, U32 firstInstance) {
+  vkCmdDrawIndexed(buffer, indexCount, instanceCount, firstIndex, indexOffset, firstInstance);
 }
 
 void Renderer::EndRenderPass(VkCommandBuffer buffer) { vkCmdEndRenderPass(buffer); }

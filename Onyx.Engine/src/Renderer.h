@@ -108,6 +108,8 @@ struct VulkanContext {
   U32 CurrentFrame = 0;
   VkBuffer VertexBuffer = VK_NULL_HANDLE;
   VkDeviceMemory VertexBufferMemory = VK_NULL_HANDLE;
+  VkBuffer IndexBuffer = VK_NULL_HANDLE;
+  VkDeviceMemory IndexBufferMemory = VK_NULL_HANDLE;
 };
 
 class Renderer final {
@@ -132,12 +134,14 @@ class Renderer final {
   static VkShaderModule CreateShaderModule(const std::vector<char>& source);
   static const bool CreateFramebuffers();
   static const bool CreateVertexBuffer();
+  static const bool CreateIndexBuffer();
   static const bool AllocateGraphicsCommandBuffers();
 
   static const bool RecreateSwapchain();
 
   // Object destruction
   static void DestroySyncObjects();
+  static void DestroyIndexBuffer();
   static void DestroyVertexBuffer();
   static void FreeGraphicsCommandBuffers();
   static void DestroyCommandPools();
@@ -177,8 +181,11 @@ class Renderer final {
   static void BindGraphicsPipeline(VkCommandBuffer buffer);
   static void BindVertexBuffers(VkCommandBuffer buffer, std::vector<VkBuffer> buffers,
                                 std::vector<U64> offsets);
+  static void BindIndexBuffer(VkCommandBuffer buffer, VkBuffer indexBuffer, U32 firstIndex);
   static void Draw(VkCommandBuffer buffer, U32 vertexCount, U32 instanceCount, U32 firstVertex,
                    U32 firstInstance);
+  static void DrawIndexed(VkCommandBuffer buffer, U32 indexCount, U32 instanceCount, U32 firstIndex,
+                          U32 indexOffset, U32 firstInstance);
   static void EndRenderPass(VkCommandBuffer buffer);
   static void EndCommandBuffer(VkCommandBuffer buffer);
   static U32 FindMemoryType(U32 typeFilter, VkMemoryPropertyFlags properties);
