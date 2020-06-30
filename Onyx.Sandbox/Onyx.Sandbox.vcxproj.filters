@@ -3,4 +3,8 @@
   <ItemGroup>
     <ClCompile Include="src\Sandbox.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\shaders\Basic.frag" />
+    <None Include="assets\shaders\Basic.vert" />
+  </ItemGroup>
 </Project>
