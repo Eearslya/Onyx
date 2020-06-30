@@ -78,12 +78,8 @@ void Application::Run() {
   while (!s_CloseRequested) {
     ProcessEvents();
 
-    if (Renderer::PrepareFrame()) {
-      if (!Renderer::Frame()) {
-        Logger::Error("Error during frame draw!");
-      }
-    } else {
-      Logger::Error("Error during frame prep!");
+    if (!Renderer::Frame()) {
+      Logger::Error("Error during frame draw!");
     }
   }
   Logger::Trace("Main application loop ended.");

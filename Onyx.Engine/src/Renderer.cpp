@@ -94,33 +94,31 @@ void Renderer::Shutdown() {
   DestroyInstance();
 }
 
-const bool Renderer::PrepareFrame() {
+const bool Renderer::Frame() {
+  U32 imageIndex;
+
   vkWaitForFences(vkContext.Device, 1, &vkContext.InFlightFences[vkContext.CurrentFrame], VK_TRUE,
                   U64_MAX);
 
   vkAcquireNextImageKHR(vkContext.Device, vkContext.Swapchain, U64_MAX,
                         vkContext.ImageAvailableSemaphores[vkContext.CurrentFrame], VK_NULL_HANDLE,
-                        &vkContext.CurrentImageIndex);
+                        &imageIndex);
 
-  if (vkContext.ImagesInFlight[vkContext.CurrentImageIndex] != VK_NULL_HANDLE) {
-    vkWaitForFences(vkContext.Device, 1, &vkContext.ImagesInFlight[vkContext.CurrentImageIndex],
+  if (vkContext.ImagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+    vkWaitForFences(vkContext.Device, 1, &vkContext.ImagesInFlight[imageIndex],
                     VK_TRUE, U64_MAX);
   }
-  vkContext.ImagesInFlight[vkContext.CurrentImageIndex] =
+  vkContext.ImagesInFlight[imageIndex] =
       vkContext.InFlightFences[vkContext.CurrentFrame];
 
-  VkCommandBuffer& cmdBuf = vkContext.GraphicsCommandBuffers[vkContext.CurrentImageIndex];
+  VkCommandBuffer& cmdBuf = vkContext.GraphicsCommandBuffers[imageIndex];
   BeginCommandBuffer(cmdBuf);
-  BeginRenderPass(cmdBuf);
+  BeginRenderPass(cmdBuf, vkContext.SwapchainFramebuffers[imageIndex]);
   BindGraphicsPipeline(cmdBuf);
   Draw(cmdBuf, 3, 1, 0, 0);
   EndRenderPass(cmdBuf);
   EndCommandBuffer(cmdBuf);
 
-  return true;
-}
-
-const bool Renderer::Frame() {
   vkResetFences(vkContext.Device, 1, &vkContext.InFlightFences[vkContext.CurrentFrame]);
 
   VkSemaphore waitSemaphores[] = {vkContext.ImageAvailableSemaphores[vkContext.CurrentFrame]};
@@ -132,7 +130,7 @@ const bool Renderer::Frame() {
   submitInfo.pWaitSemaphores = waitSemaphores;
   submitInfo.pWaitDstStageMask = waitStages;
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &vkContext.GraphicsCommandBuffers[vkContext.CurrentImageIndex];
+  submitInfo.pCommandBuffers = &vkContext.GraphicsCommandBuffers[imageIndex];
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = signalSemaphores;
 
@@ -144,7 +142,7 @@ const bool Renderer::Frame() {
   presentInfo.pWaitSemaphores = signalSemaphores;
   presentInfo.swapchainCount = 1;
   presentInfo.pSwapchains = swapchains;
-  presentInfo.pImageIndices = &vkContext.CurrentImageIndex;
+  presentInfo.pImageIndices = &imageIndex;
   presentInfo.pResults = nullptr;
 
   vkQueuePresentKHR(vkContext.PresentationQueue, &presentInfo);
@@ -1072,11 +1070,11 @@ void Renderer::BeginCommandBuffer(VkCommandBuffer buffer) {
   VkCall(vkBeginCommandBuffer(buffer, &beginInfo));
 }
 
-void Renderer::BeginRenderPass(VkCommandBuffer buffer) {
+void Renderer::BeginRenderPass(VkCommandBuffer buffer, VkFramebuffer framebuffer) {
   VkClearValue clearColor = {0.0f, 0.0f, 1.0f, 1.0f};
   VkRenderPassBeginInfo renderPassBeginInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
   renderPassBeginInfo.renderPass = vkContext.RenderPass;
-  renderPassBeginInfo.framebuffer = vkContext.SwapchainFramebuffers[vkContext.CurrentImageIndex];
+  renderPassBeginInfo.framebuffer = framebuffer;
   renderPassBeginInfo.renderArea.offset = {0, 0};
   renderPassBeginInfo.renderArea.extent = vkContext.SwapchainExtent;
   renderPassBeginInfo.clearValueCount = 1;

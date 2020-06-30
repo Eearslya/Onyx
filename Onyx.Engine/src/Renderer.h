@@ -76,7 +76,6 @@ struct VulkanContext {
   std::vector<VkSemaphore> RenderFinishedSemaphores;
   std::vector<VkFence> InFlightFences;
   std::vector<VkFence> ImagesInFlight;
-  U32 CurrentImageIndex = 0;
   U32 CurrentFrame = 0;
 };
 
@@ -84,7 +83,6 @@ class Renderer final {
  public:
   static const bool Initialize();
   static void Shutdown();
-  static const bool PrepareFrame();
   static const bool Frame();
 
  private:
@@ -137,7 +135,7 @@ class Renderer final {
   static const bool GetSwapchainExtent();
   static const bool GetGraphicsCommandBuffers();
   static void BeginCommandBuffer(VkCommandBuffer buffer);
-  static void BeginRenderPass(VkCommandBuffer buffer);
+  static void BeginRenderPass(VkCommandBuffer buffer, VkFramebuffer framebuffer);
   static void BindGraphicsPipeline(VkCommandBuffer buffer);
   static void Draw(VkCommandBuffer buffer, U32 vertexCount, U32 instanceCount, U32 firstVertex,
                    U32 firstInstance);
