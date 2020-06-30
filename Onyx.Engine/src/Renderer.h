@@ -91,17 +91,22 @@ class Renderer final {
   static const bool CreateDebugMessenger();
   static const bool CreateSurface();
   static const bool CreateDevice();
+  static const bool CreateCommandPools();
+  static const bool CreateSyncObjects();
+  static const bool CreateSwapchainObjects();
   static const bool CreateSwapchain();
   static const bool CreateSwapchainImages();
   static const bool CreateRenderPass();
   static const bool CreateGraphicsPipeline();
   static VkShaderModule CreateShaderModule(const std::vector<char>& source);
   static const bool CreateFramebuffers();
-  static const bool CreateCommandPools();
-  static const bool CreateSyncObjects();
+  static const bool AllocateGraphicsCommandBuffers();
+
+  static const bool RecreateSwapchain();
 
   // Object destruction
   static void DestroySyncObjects();
+  static void FreeGraphicsCommandBuffers();
   static void DestroyCommandPools();
   static void DestroyFramebuffers();
   static void DestroyShaderModule(VkShaderModule module);
@@ -109,6 +114,7 @@ class Renderer final {
   static void DestroyRenderPass();
   static void DestroySwapchainImages();
   static void DestroySwapchain();
+  static void DestroySwapchainObjects();
   static void DestroyDevice();
   static void DestroySurface();
   static void DestroyDebugMessenger();
@@ -133,7 +139,6 @@ class Renderer final {
   static const bool GetSwapchainSurfaceFormat();
   static const bool GetSwapchainPresentMode();
   static const bool GetSwapchainExtent();
-  static const bool GetGraphicsCommandBuffers();
   static void BeginCommandBuffer(VkCommandBuffer buffer);
   static void BeginRenderPass(VkCommandBuffer buffer, VkFramebuffer framebuffer);
   static void BindGraphicsPipeline(VkCommandBuffer buffer);

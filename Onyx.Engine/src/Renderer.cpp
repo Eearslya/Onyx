@@ -65,14 +65,8 @@ const bool Renderer::Initialize() {
   Logger::Debug("Selected device: %s", vkContext.PhysicalDeviceInfo.Properties.deviceName);
   ASSERT(CreateDevice());
   ASSERT(GetDeviceQueues());
-  ASSERT(CreateSwapchain());
-  ASSERT(CreateSwapchainImages());
-  ASSERT(CreateRenderPass());
-  ASSERT(CreateGraphicsPipeline());
-  ASSERT(CreateFramebuffers());
   ASSERT(CreateCommandPools());
-  ASSERT(GetGraphicsCommandBuffers());
-  ASSERT(CreateSyncObjects());
+  ASSERT(CreateSwapchainObjects());
 
   Logger::Info("Renderer finished initialization.");
   return true;
@@ -81,13 +75,8 @@ const bool Renderer::Initialize() {
 void Renderer::Shutdown() {
   Logger::Info("Renderer shutting down.");
   vkDeviceWaitIdle(vkContext.Device);
-  DestroySyncObjects();
+  DestroySwapchainObjects();
   DestroyCommandPools();
-  DestroyFramebuffers();
-  DestroyGraphicsPipeline();
-  DestroyRenderPass();
-  DestroySwapchainImages();
-  DestroySwapchain();
   DestroyDevice();
   DestroySurface();
   DestroyDebugMessenger();
@@ -100,16 +89,20 @@ const bool Renderer::Frame() {
   vkWaitForFences(vkContext.Device, 1, &vkContext.InFlightFences[vkContext.CurrentFrame], VK_TRUE,
                   U64_MAX);
 
-  vkAcquireNextImageKHR(vkContext.Device, vkContext.Swapchain, U64_MAX,
-                        vkContext.ImageAvailableSemaphores[vkContext.CurrentFrame], VK_NULL_HANDLE,
-                        &imageIndex);
+  VkResult acquireImageResult = vkAcquireNextImageKHR(
+      vkContext.Device, vkContext.Swapchain, U64_MAX,
+      vkContext.ImageAvailableSemaphores[vkContext.CurrentFrame], VK_NULL_HANDLE, &imageIndex);
+  if (acquireImageResult == VK_ERROR_OUT_OF_DATE_KHR) {
+    RecreateSwapchain();
+    return true;
+  } else if (acquireImageResult != VK_SUCCESS && acquireImageResult != VK_SUBOPTIMAL_KHR) {
+    return false;
+  }
 
   if (vkContext.ImagesInFlight[imageIndex] != VK_NULL_HANDLE) {
-    vkWaitForFences(vkContext.Device, 1, &vkContext.ImagesInFlight[imageIndex],
-                    VK_TRUE, U64_MAX);
+    vkWaitForFences(vkContext.Device, 1, &vkContext.ImagesInFlight[imageIndex], VK_TRUE, U64_MAX);
   }
-  vkContext.ImagesInFlight[imageIndex] =
-      vkContext.InFlightFences[vkContext.CurrentFrame];
+  vkContext.ImagesInFlight[imageIndex] = vkContext.InFlightFences[vkContext.CurrentFrame];
 
   VkCommandBuffer& cmdBuf = vkContext.GraphicsCommandBuffers[imageIndex];
   BeginCommandBuffer(cmdBuf);
@@ -122,8 +115,7 @@ const bool Renderer::Frame() {
   vkResetFences(vkContext.Device, 1, &vkContext.InFlightFences[vkContext.CurrentFrame]);
 
   VkSemaphore waitSemaphores[] = {vkContext.ImageAvailableSemaphores[vkContext.CurrentFrame]};
-  VkSemaphore signalSemaphores[] = {
-      vkContext.RenderFinishedSemaphores[vkContext.CurrentFrame]};
+  VkSemaphore signalSemaphores[] = {vkContext.RenderFinishedSemaphores[vkContext.CurrentFrame]};
   VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
   VkSubmitInfo submitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
   submitInfo.waitSemaphoreCount = 1;
@@ -134,7 +126,8 @@ const bool Renderer::Frame() {
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = signalSemaphores;
 
-  VkCall(vkQueueSubmit(vkContext.GraphicsQueue, 1, &submitInfo, vkContext.InFlightFences[vkContext.CurrentFrame]));
+  VkCall(vkQueueSubmit(vkContext.GraphicsQueue, 1, &submitInfo,
+                       vkContext.InFlightFences[vkContext.CurrentFrame]));
 
   VkSwapchainKHR swapchains[] = {vkContext.Swapchain};
   VkPresentInfoKHR presentInfo{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
@@ -145,7 +138,12 @@ const bool Renderer::Frame() {
   presentInfo.pImageIndices = &imageIndex;
   presentInfo.pResults = nullptr;
 
-  vkQueuePresentKHR(vkContext.PresentationQueue, &presentInfo);
+  VkResult presentResult = vkQueuePresentKHR(vkContext.PresentationQueue, &presentInfo);
+  if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR) {
+    RecreateSwapchain();
+  } else if (presentResult != VK_SUCCESS) {
+    return false;
+  }
 
   vkContext.CurrentFrame = (vkContext.CurrentFrame + 1) % g_MaxFramesInFlight;
 
@@ -598,9 +596,24 @@ const bool Renderer::CreateCommandPools() {
   return vkContext.GraphicsCommandPool != VK_NULL_HANDLE;
 }
 
+const bool Renderer::AllocateGraphicsCommandBuffers() {
+  vkContext.GraphicsCommandBuffers.resize(vkContext.SwapchainImageCount, VK_NULL_HANDLE);
+
+  VkCommandBufferAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+  allocateInfo.commandPool = vkContext.GraphicsCommandPool;
+  allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocateInfo.commandBufferCount = static_cast<U32>(vkContext.GraphicsCommandBuffers.size());
+
+  VkCall(vkAllocateCommandBuffers(vkContext.Device, &allocateInfo,
+                                  vkContext.GraphicsCommandBuffers.data()));
+
+  return true;
+}
+
 const bool Renderer::CreateSyncObjects() {
   Logger::Trace("Creating sync objects.");
 
+  vkContext.ImagesInFlight.clear();
   vkContext.ImageAvailableSemaphores.resize(g_MaxFramesInFlight, VK_NULL_HANDLE);
   vkContext.RenderFinishedSemaphores.resize(g_MaxFramesInFlight, VK_NULL_HANDLE);
   vkContext.InFlightFences.resize(g_MaxFramesInFlight, VK_NULL_HANDLE);
@@ -627,12 +640,40 @@ const bool Renderer::CreateSyncObjects() {
   return true;
 }
 
+const bool Renderer::CreateSwapchainObjects() {
+  ASSERT(CreateSwapchain());
+  ASSERT(CreateSwapchainImages());
+  ASSERT(CreateRenderPass());
+  ASSERT(CreateGraphicsPipeline());
+  ASSERT(CreateFramebuffers());
+  ASSERT(AllocateGraphicsCommandBuffers());
+  ASSERT(CreateSyncObjects());
+  return true;
+}
+
+const bool Renderer::RecreateSwapchain() {
+  Logger::Debug("Swapchain out of date or suboptimal, recreating.");
+  vkDeviceWaitIdle(vkContext.Device);
+
+  if (vkContext.Swapchain) {
+    DestroySwapchainObjects();
+  }
+
+  return CreateSwapchainObjects();
+}
+
 void Renderer::DestroySyncObjects() {
   for (U32 i = 0; i < g_MaxFramesInFlight; i++) {
     vkDestroyFence(vkContext.Device, vkContext.InFlightFences[i], nullptr);
     vkDestroySemaphore(vkContext.Device, vkContext.RenderFinishedSemaphores[i], nullptr);
     vkDestroySemaphore(vkContext.Device, vkContext.ImageAvailableSemaphores[i], nullptr);
   }
+}
+
+void Renderer::FreeGraphicsCommandBuffers() {
+  vkFreeCommandBuffers(vkContext.Device, vkContext.GraphicsCommandPool,
+                       static_cast<U32>(vkContext.GraphicsCommandBuffers.size()),
+                       vkContext.GraphicsCommandBuffers.data());
 }
 
 void Renderer::DestroyCommandPools() {
@@ -666,6 +707,15 @@ void Renderer::DestroySwapchainImages() {
 
 void Renderer::DestroySwapchain() {
   vkDestroySwapchainKHR(vkContext.Device, vkContext.Swapchain, nullptr);
+}
+
+void Renderer::DestroySwapchainObjects() {
+  DestroySyncObjects();
+  DestroyFramebuffers();
+  DestroyGraphicsPipeline();
+  DestroyRenderPass();
+  DestroySwapchainImages();
+  DestroySwapchain();
 }
 
 void Renderer::DestroyDevice() { vkDestroyDevice(vkContext.Device, nullptr); }
@@ -1030,6 +1080,8 @@ const bool Renderer::GetSwapchainPresentMode() {
 }
 
 const bool Renderer::GetSwapchainExtent() {
+  QueryPhysicalDeviceSwapchainSupport(vkContext.PhysicalDevice,
+                                      vkContext.PhysicalDeviceInfo.SwapchainSupport);
   const VkSurfaceCapabilitiesKHR& capabilities =
       vkContext.PhysicalDeviceInfo.SwapchainSupport.Capabilities;
   if (capabilities.currentExtent.width != U32_MAX) {
@@ -1044,20 +1096,6 @@ const bool Renderer::GetSwapchainExtent() {
   vkContext.SwapchainExtent.height =
       std::max(capabilities.minImageExtent.height,
                std::min(capabilities.maxImageExtent.height, appExtent.Height));
-
-  return true;
-}
-
-const bool Renderer::GetGraphicsCommandBuffers() {
-  vkContext.GraphicsCommandBuffers.resize(vkContext.SwapchainImageCount, VK_NULL_HANDLE);
-
-  VkCommandBufferAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
-  allocateInfo.commandPool = vkContext.GraphicsCommandPool;
-  allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocateInfo.commandBufferCount = static_cast<U32>(vkContext.GraphicsCommandBuffers.size());
-
-  VkCall(vkAllocateCommandBuffers(vkContext.Device, &allocateInfo,
-                                  vkContext.GraphicsCommandBuffers.data()));
 
   return true;
 }

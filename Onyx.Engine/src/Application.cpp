@@ -36,7 +36,8 @@ const bool Application::Initialize() {
   wc.lpszClassName = g_WindowClassName;
   RegisterClassW(&wc);
 
-  U32 windowStyle = WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION | WS_THICKFRAME;
+  U32 windowStyle =
+      WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX;
   U32 windowExStyle = WS_EX_APPWINDOW;
 
   U32 windowW = g_WindowWidth;
