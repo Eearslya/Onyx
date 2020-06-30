@@ -70,6 +70,14 @@ struct VulkanContext {
   VkPipelineLayout PipelineLayout = VK_NULL_HANDLE;
   VkPipeline GraphicsPipeline = VK_NULL_HANDLE;
   std::vector<VkFramebuffer> SwapchainFramebuffers;
+  VkCommandPool GraphicsCommandPool = VK_NULL_HANDLE;
+  std::vector<VkCommandBuffer> GraphicsCommandBuffers;
+  std::vector<VkSemaphore> ImageAvailableSemaphores;
+  std::vector<VkSemaphore> RenderFinishedSemaphores;
+  std::vector<VkFence> InFlightFences;
+  std::vector<VkFence> ImagesInFlight;
+  U32 CurrentImageIndex = 0;
+  U32 CurrentFrame = 0;
 };
 
 class Renderer final {
@@ -91,8 +99,12 @@ class Renderer final {
   static const bool CreateGraphicsPipeline();
   static VkShaderModule CreateShaderModule(const std::vector<char>& source);
   static const bool CreateFramebuffers();
+  static const bool CreateCommandPools();
+  static const bool CreateSyncObjects();
 
   // Object destruction
+  static void DestroySyncObjects();
+  static void DestroyCommandPools();
   static void DestroyFramebuffers();
   static void DestroyShaderModule(VkShaderModule module);
   static void DestroyGraphicsPipeline();
@@ -123,5 +135,13 @@ class Renderer final {
   static const bool GetSwapchainSurfaceFormat();
   static const bool GetSwapchainPresentMode();
   static const bool GetSwapchainExtent();
+  static const bool GetGraphicsCommandBuffers();
+  static void BeginCommandBuffer(VkCommandBuffer buffer);
+  static void BeginRenderPass(VkCommandBuffer buffer);
+  static void BindGraphicsPipeline(VkCommandBuffer buffer);
+  static void Draw(VkCommandBuffer buffer, U32 vertexCount, U32 instanceCount, U32 firstVertex,
+                   U32 firstInstance);
+  static void EndRenderPass(VkCommandBuffer buffer);
+  static void EndCommandBuffer(VkCommandBuffer buffer);
 };
 }  // namespace Onyx

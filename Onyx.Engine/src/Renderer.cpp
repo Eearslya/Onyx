@@ -23,6 +23,7 @@ static const std::vector<const char*> g_RequiredInstanceValidationExtensions = {
 static const std::vector<const char*> g_ValidationLayers = {"VK_LAYER_KHRONOS_validation"};
 static const std::vector<const char*> g_RequiredDeviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+static const U32 g_MaxFramesInFlight = 2;
 
 #ifdef ONYX_DEBUG
 static const bool g_EnableValidation = true;
@@ -69,6 +70,9 @@ const bool Renderer::Initialize() {
   ASSERT(CreateRenderPass());
   ASSERT(CreateGraphicsPipeline());
   ASSERT(CreateFramebuffers());
+  ASSERT(CreateCommandPools());
+  ASSERT(GetGraphicsCommandBuffers());
+  ASSERT(CreateSyncObjects());
 
   Logger::Info("Renderer finished initialization.");
   return true;
@@ -76,6 +80,9 @@ const bool Renderer::Initialize() {
 
 void Renderer::Shutdown() {
   Logger::Info("Renderer shutting down.");
+  vkDeviceWaitIdle(vkContext.Device);
+  DestroySyncObjects();
+  DestroyCommandPools();
   DestroyFramebuffers();
   DestroyGraphicsPipeline();
   DestroyRenderPass();
@@ -87,9 +94,65 @@ void Renderer::Shutdown() {
   DestroyInstance();
 }
 
-const bool Renderer::PrepareFrame() { return true; }
+const bool Renderer::PrepareFrame() {
+  vkWaitForFences(vkContext.Device, 1, &vkContext.InFlightFences[vkContext.CurrentFrame], VK_TRUE,
+                  U64_MAX);
 
-const bool Renderer::Frame() { return true; }
+  vkAcquireNextImageKHR(vkContext.Device, vkContext.Swapchain, U64_MAX,
+                        vkContext.ImageAvailableSemaphores[vkContext.CurrentFrame], VK_NULL_HANDLE,
+                        &vkContext.CurrentImageIndex);
+
+  if (vkContext.ImagesInFlight[vkContext.CurrentImageIndex] != VK_NULL_HANDLE) {
+    vkWaitForFences(vkContext.Device, 1, &vkContext.ImagesInFlight[vkContext.CurrentImageIndex],
+                    VK_TRUE, U64_MAX);
+  }
+  vkContext.ImagesInFlight[vkContext.CurrentImageIndex] =
+      vkContext.InFlightFences[vkContext.CurrentFrame];
+
+  VkCommandBuffer& cmdBuf = vkContext.GraphicsCommandBuffers[vkContext.CurrentImageIndex];
+  BeginCommandBuffer(cmdBuf);
+  BeginRenderPass(cmdBuf);
+  BindGraphicsPipeline(cmdBuf);
+  Draw(cmdBuf, 3, 1, 0, 0);
+  EndRenderPass(cmdBuf);
+  EndCommandBuffer(cmdBuf);
+
+  return true;
+}
+
+const bool Renderer::Frame() {
+  vkResetFences(vkContext.Device, 1, &vkContext.InFlightFences[vkContext.CurrentFrame]);
+
+  VkSemaphore waitSemaphores[] = {vkContext.ImageAvailableSemaphores[vkContext.CurrentFrame]};
+  VkSemaphore signalSemaphores[] = {
+      vkContext.RenderFinishedSemaphores[vkContext.CurrentFrame]};
+  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  VkSubmitInfo submitInfo{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = waitSemaphores;
+  submitInfo.pWaitDstStageMask = waitStages;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &vkContext.GraphicsCommandBuffers[vkContext.CurrentImageIndex];
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = signalSemaphores;
+
+  VkCall(vkQueueSubmit(vkContext.GraphicsQueue, 1, &submitInfo, vkContext.InFlightFences[vkContext.CurrentFrame]));
+
+  VkSwapchainKHR swapchains[] = {vkContext.Swapchain};
+  VkPresentInfoKHR presentInfo{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = signalSemaphores;
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = swapchains;
+  presentInfo.pImageIndices = &vkContext.CurrentImageIndex;
+  presentInfo.pResults = nullptr;
+
+  vkQueuePresentKHR(vkContext.PresentationQueue, &presentInfo);
+
+  vkContext.CurrentFrame = (vkContext.CurrentFrame + 1) % g_MaxFramesInFlight;
+
+  return true;
+}
 
 const bool Renderer::CreateInstance() {
   Logger::Trace("Creating Vulkan instance.");
@@ -313,11 +376,21 @@ const bool Renderer::CreateRenderPass() {
   subpass.colorAttachmentCount = 1;
   subpass.pColorAttachments = &colorAttachmentRef;
 
+  VkSubpassDependency dependency{};
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = 0;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
   VkRenderPassCreateInfo renderPassCreateInfo{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
   renderPassCreateInfo.attachmentCount = 1;
   renderPassCreateInfo.pAttachments = &colorAttachment;
   renderPassCreateInfo.subpassCount = 1;
   renderPassCreateInfo.pSubpasses = &subpass;
+  renderPassCreateInfo.dependencyCount = 1;
+  renderPassCreateInfo.pDependencies = &dependency;
 
   VkCall(
       vkCreateRenderPass(vkContext.Device, &renderPassCreateInfo, nullptr, &vkContext.RenderPass));
@@ -512,6 +585,60 @@ const bool Renderer::CreateFramebuffers() {
   }
 
   return true;
+}
+
+const bool Renderer::CreateCommandPools() {
+  Logger::Trace("Creating command pools.");
+
+  VkCommandPoolCreateInfo graphicsPoolCreateInfo{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+  graphicsPoolCreateInfo.queueFamilyIndex = vkContext.PhysicalDeviceInfo.Queues.GraphicsIndex;
+  graphicsPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+  VkCall(vkCreateCommandPool(vkContext.Device, &graphicsPoolCreateInfo, nullptr,
+                             &vkContext.GraphicsCommandPool));
+
+  return vkContext.GraphicsCommandPool != VK_NULL_HANDLE;
+}
+
+const bool Renderer::CreateSyncObjects() {
+  Logger::Trace("Creating sync objects.");
+
+  vkContext.ImageAvailableSemaphores.resize(g_MaxFramesInFlight, VK_NULL_HANDLE);
+  vkContext.RenderFinishedSemaphores.resize(g_MaxFramesInFlight, VK_NULL_HANDLE);
+  vkContext.InFlightFences.resize(g_MaxFramesInFlight, VK_NULL_HANDLE);
+  vkContext.ImagesInFlight.resize(vkContext.SwapchainImageCount, VK_NULL_HANDLE);
+
+  VkSemaphoreCreateInfo semaphoreCreateInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+  VkFenceCreateInfo fenceCreateInfo{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+  fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  for (U32 i = 0; i < g_MaxFramesInFlight; i++) {
+    VkCall(vkCreateSemaphore(vkContext.Device, &semaphoreCreateInfo, nullptr,
+                             &vkContext.ImageAvailableSemaphores[i]));
+    VkCall(vkCreateSemaphore(vkContext.Device, &semaphoreCreateInfo, nullptr,
+                             &vkContext.RenderFinishedSemaphores[i]));
+    VkCall(
+        vkCreateFence(vkContext.Device, &fenceCreateInfo, nullptr, &vkContext.InFlightFences[i]));
+    if (vkContext.ImageAvailableSemaphores[i] == VK_NULL_HANDLE ||
+        vkContext.RenderFinishedSemaphores[i] == VK_NULL_HANDLE ||
+        vkContext.InFlightFences[i] == VK_NULL_HANDLE) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void Renderer::DestroySyncObjects() {
+  for (U32 i = 0; i < g_MaxFramesInFlight; i++) {
+    vkDestroyFence(vkContext.Device, vkContext.InFlightFences[i], nullptr);
+    vkDestroySemaphore(vkContext.Device, vkContext.RenderFinishedSemaphores[i], nullptr);
+    vkDestroySemaphore(vkContext.Device, vkContext.ImageAvailableSemaphores[i], nullptr);
+  }
+}
+
+void Renderer::DestroyCommandPools() {
+  vkDestroyCommandPool(vkContext.Device, vkContext.GraphicsCommandPool, nullptr);
 }
 
 void Renderer::DestroyFramebuffers() {
@@ -922,4 +1049,51 @@ const bool Renderer::GetSwapchainExtent() {
 
   return true;
 }
+
+const bool Renderer::GetGraphicsCommandBuffers() {
+  vkContext.GraphicsCommandBuffers.resize(vkContext.SwapchainImageCount, VK_NULL_HANDLE);
+
+  VkCommandBufferAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+  allocateInfo.commandPool = vkContext.GraphicsCommandPool;
+  allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocateInfo.commandBufferCount = static_cast<U32>(vkContext.GraphicsCommandBuffers.size());
+
+  VkCall(vkAllocateCommandBuffers(vkContext.Device, &allocateInfo,
+                                  vkContext.GraphicsCommandBuffers.data()));
+
+  return true;
+}
+
+void Renderer::BeginCommandBuffer(VkCommandBuffer buffer) {
+  VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+  beginInfo.flags = 0;
+  beginInfo.pInheritanceInfo = nullptr;
+
+  VkCall(vkBeginCommandBuffer(buffer, &beginInfo));
+}
+
+void Renderer::BeginRenderPass(VkCommandBuffer buffer) {
+  VkClearValue clearColor = {0.0f, 0.0f, 1.0f, 1.0f};
+  VkRenderPassBeginInfo renderPassBeginInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+  renderPassBeginInfo.renderPass = vkContext.RenderPass;
+  renderPassBeginInfo.framebuffer = vkContext.SwapchainFramebuffers[vkContext.CurrentImageIndex];
+  renderPassBeginInfo.renderArea.offset = {0, 0};
+  renderPassBeginInfo.renderArea.extent = vkContext.SwapchainExtent;
+  renderPassBeginInfo.clearValueCount = 1;
+  renderPassBeginInfo.pClearValues = &clearColor;
+  vkCmdBeginRenderPass(buffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void Renderer::BindGraphicsPipeline(VkCommandBuffer buffer) {
+  vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkContext.GraphicsPipeline);
+}
+
+void Renderer::Draw(VkCommandBuffer buffer, U32 vertexCount, U32 instanceCount, U32 firstVertex,
+                    U32 firstInstance) {
+  vkCmdDraw(buffer, vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
+void Renderer::EndRenderPass(VkCommandBuffer buffer) { vkCmdEndRenderPass(buffer); }
+
+void Renderer::EndCommandBuffer(VkCommandBuffer buffer) { VkCall(vkEndCommandBuffer(buffer)); }
 }  // namespace Onyx
