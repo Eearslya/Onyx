@@ -25,6 +25,10 @@ static const std::vector<const char*> g_RequiredDeviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 static const U32 g_MaxFramesInFlight = 2;
 
+static const std::vector<Vertex> g_Vertices = {{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+                                               {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+                                               {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+
 #ifdef ONYX_DEBUG
 static const bool g_EnableValidation = true;
 #else
@@ -67,6 +71,7 @@ const bool Renderer::Initialize() {
   ASSERT(GetDeviceQueues());
   ASSERT(CreateCommandPools());
   ASSERT(CreateSwapchainObjects());
+  ASSERT(CreateVertexBuffer());
 
   Logger::Info("Renderer finished initialization.");
   return true;
@@ -75,6 +80,8 @@ const bool Renderer::Initialize() {
 void Renderer::Shutdown() {
   Logger::Info("Renderer shutting down.");
   vkDeviceWaitIdle(vkContext.Device);
+
+  DestroyVertexBuffer();
   DestroySwapchainObjects();
   DestroyCommandPools();
   DestroyDevice();
@@ -108,6 +115,7 @@ const bool Renderer::Frame() {
   BeginCommandBuffer(cmdBuf);
   BeginRenderPass(cmdBuf, vkContext.SwapchainFramebuffers[imageIndex]);
   BindGraphicsPipeline(cmdBuf);
+  BindVertexBuffers(cmdBuf, {vkContext.VertexBuffer}, {0});
   Draw(cmdBuf, 3, 1, 0, 0);
   EndRenderPass(cmdBuf);
   EndCommandBuffer(cmdBuf);
@@ -408,6 +416,9 @@ const bool Renderer::CreateGraphicsPipeline() {
     return false;
   }
 
+  auto vertexBindingDescription = Vertex::GetBindingDescription();
+  auto vertexAttributeDescriptions = Vertex::GetAttributeDescriptions();
+
   VkPipelineShaderStageCreateInfo vertexShaderStageCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
   vertexShaderStageCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -425,10 +436,11 @@ const bool Renderer::CreateGraphicsPipeline() {
 
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
-  vertexInputInfo.vertexBindingDescriptionCount = 0;
-  vertexInputInfo.pVertexBindingDescriptions = nullptr;
-  vertexInputInfo.vertexAttributeDescriptionCount = 0;
-  vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+  vertexInputInfo.vertexBindingDescriptionCount = 1;
+  vertexInputInfo.pVertexBindingDescriptions = &vertexBindingDescription;
+  vertexInputInfo.vertexAttributeDescriptionCount =
+      static_cast<U32>(vertexAttributeDescriptions.size());
+  vertexInputInfo.pVertexAttributeDescriptions = vertexAttributeDescriptions.data();
 
   VkPipelineInputAssemblyStateCreateInfo inputAssembly{
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
@@ -583,6 +595,39 @@ const bool Renderer::CreateFramebuffers() {
   return true;
 }
 
+const bool Renderer::CreateVertexBuffer() {
+  VkBufferCreateInfo bufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+  bufferCreateInfo.size = sizeof(g_Vertices[0]) * g_Vertices.size();
+  bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+  bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  VkCall(vkCreateBuffer(vkContext.Device, &bufferCreateInfo, nullptr, &vkContext.VertexBuffer));
+  if (vkContext.VertexBuffer == VK_NULL_HANDLE) {
+    return false;
+  }
+
+  VkMemoryRequirements memoryRequirements;
+  vkGetBufferMemoryRequirements(vkContext.Device, vkContext.VertexBuffer, &memoryRequirements);
+
+  VkMemoryAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+  allocateInfo.allocationSize = memoryRequirements.size;
+  allocateInfo.memoryTypeIndex =
+      FindMemoryType(memoryRequirements.memoryTypeBits,
+                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  VkCall(vkAllocateMemory(vkContext.Device, &allocateInfo, nullptr, &vkContext.VertexBufferMemory));
+  if (vkContext.VertexBufferMemory == VK_NULL_HANDLE) {
+    return false;
+  }
+
+  vkBindBufferMemory(vkContext.Device, vkContext.VertexBuffer, vkContext.VertexBufferMemory, 0);
+
+  void* data;
+  vkMapMemory(vkContext.Device, vkContext.VertexBufferMemory, 0, bufferCreateInfo.size, 0, &data);
+  memcpy(data, g_Vertices.data(), static_cast<size_t>(bufferCreateInfo.size));
+  vkUnmapMemory(vkContext.Device, vkContext.VertexBufferMemory);
+
+  return true;
+}
+
 const bool Renderer::CreateCommandPools() {
   Logger::Trace("Creating command pools.");
 
@@ -668,6 +713,11 @@ void Renderer::DestroySyncObjects() {
     vkDestroySemaphore(vkContext.Device, vkContext.RenderFinishedSemaphores[i], nullptr);
     vkDestroySemaphore(vkContext.Device, vkContext.ImageAvailableSemaphores[i], nullptr);
   }
+}
+
+void Renderer::DestroyVertexBuffer() {
+  vkDestroyBuffer(vkContext.Device, vkContext.VertexBuffer, nullptr);
+  vkFreeMemory(vkContext.Device, vkContext.VertexBufferMemory, nullptr);
 }
 
 void Renderer::FreeGraphicsCommandBuffers() {
@@ -1109,7 +1159,7 @@ void Renderer::BeginCommandBuffer(VkCommandBuffer buffer) {
 }
 
 void Renderer::BeginRenderPass(VkCommandBuffer buffer, VkFramebuffer framebuffer) {
-  VkClearValue clearColor = {0.0f, 0.0f, 1.0f, 1.0f};
+  VkClearValue clearColor = {0.05f, 0.05f, 0.05f, 1.0f};
   VkRenderPassBeginInfo renderPassBeginInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
   renderPassBeginInfo.renderPass = vkContext.RenderPass;
   renderPassBeginInfo.framebuffer = framebuffer;
@@ -1124,6 +1174,14 @@ void Renderer::BindGraphicsPipeline(VkCommandBuffer buffer) {
   vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkContext.GraphicsPipeline);
 }
 
+void Renderer::BindVertexBuffers(VkCommandBuffer buffer, std::vector<VkBuffer> buffers,
+                                 std::vector<U64> offsets) {
+  ASSERT(buffers.size() != 0);
+  ASSERT(buffers.size() == offsets.size());
+  vkCmdBindVertexBuffers(buffer, 0, static_cast<U32>(buffers.size()), buffers.data(),
+                         offsets.data());
+}
+
 void Renderer::Draw(VkCommandBuffer buffer, U32 vertexCount, U32 instanceCount, U32 firstVertex,
                     U32 firstInstance) {
   vkCmdDraw(buffer, vertexCount, instanceCount, firstVertex, firstInstance);
@@ -1132,4 +1190,16 @@ void Renderer::Draw(VkCommandBuffer buffer, U32 vertexCount, U32 instanceCount, 
 void Renderer::EndRenderPass(VkCommandBuffer buffer) { vkCmdEndRenderPass(buffer); }
 
 void Renderer::EndCommandBuffer(VkCommandBuffer buffer) { VkCall(vkEndCommandBuffer(buffer)); }
+
+U32 Renderer::FindMemoryType(U32 typeFilter, VkMemoryPropertyFlags properties) {
+  VkPhysicalDeviceMemoryProperties& memory = vkContext.PhysicalDeviceInfo.Memory;
+  for (U32 i = 0; i < memory.memoryTypeCount; i++) {
+    if (typeFilter & (1 << i) && (memory.memoryTypes[i].propertyFlags & properties) == properties) {
+      return i;
+    }
+  }
+
+  ASSERT_MSG(false, "Failed to find valid memory type!");
+  return 0;
+}
 }  // namespace Onyx

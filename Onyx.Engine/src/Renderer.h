@@ -5,9 +5,37 @@
 
 #include <vulkan/vulkan.h>
 
+#include <array>
+#include <glm/glm.hpp>
 #include <vector>
 
 namespace Onyx {
+struct Vertex {
+  glm::vec2 Position;
+  glm::vec3 Color;
+
+  static VkVertexInputBindingDescription GetBindingDescription() {
+    VkVertexInputBindingDescription bindingDescription{};
+    bindingDescription.binding = 0;
+    bindingDescription.stride = sizeof(Vertex);
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    return bindingDescription;
+  }
+
+  static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() {
+    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+    attributeDescriptions[0].binding = 0;
+    attributeDescriptions[0].location = 0;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[0].offset = offsetof(Vertex, Position);
+    attributeDescriptions[1].binding = 0;
+    attributeDescriptions[1].location = 1;
+    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[1].offset = offsetof(Vertex, Color);
+    return attributeDescriptions;
+  }
+};
+
 struct VulkanPhysicalDeviceSwapchainSupport {
   VkSurfaceCapabilitiesKHR Capabilities;
   std::vector<VkSurfaceFormatKHR> Formats;
@@ -77,6 +105,8 @@ struct VulkanContext {
   std::vector<VkFence> InFlightFences;
   std::vector<VkFence> ImagesInFlight;
   U32 CurrentFrame = 0;
+  VkBuffer VertexBuffer = VK_NULL_HANDLE;
+  VkDeviceMemory VertexBufferMemory = VK_NULL_HANDLE;
 };
 
 class Renderer final {
@@ -100,12 +130,14 @@ class Renderer final {
   static const bool CreateGraphicsPipeline();
   static VkShaderModule CreateShaderModule(const std::vector<char>& source);
   static const bool CreateFramebuffers();
+  static const bool CreateVertexBuffer();
   static const bool AllocateGraphicsCommandBuffers();
 
   static const bool RecreateSwapchain();
 
   // Object destruction
   static void DestroySyncObjects();
+  static void DestroyVertexBuffer();
   static void FreeGraphicsCommandBuffers();
   static void DestroyCommandPools();
   static void DestroyFramebuffers();
@@ -142,9 +174,12 @@ class Renderer final {
   static void BeginCommandBuffer(VkCommandBuffer buffer);
   static void BeginRenderPass(VkCommandBuffer buffer, VkFramebuffer framebuffer);
   static void BindGraphicsPipeline(VkCommandBuffer buffer);
+  static void BindVertexBuffers(VkCommandBuffer buffer, std::vector<VkBuffer> buffers,
+                                std::vector<U64> offsets);
   static void Draw(VkCommandBuffer buffer, U32 vertexCount, U32 instanceCount, U32 firstVertex,
                    U32 firstInstance);
   static void EndRenderPass(VkCommandBuffer buffer);
   static void EndCommandBuffer(VkCommandBuffer buffer);
+  static U32 FindMemoryType(U32 typeFilter, VkMemoryPropertyFlags properties);
 };
 }  // namespace Onyx
