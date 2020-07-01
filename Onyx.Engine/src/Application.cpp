@@ -1,6 +1,7 @@
 #include "Application.h"
 
 #include "Logger.h"
+#include "Mesh.h"
 #include "Renderer.h"
 
 namespace Onyx {
@@ -11,6 +12,8 @@ bool Application::s_CloseRequested = false;
 static const U32 g_WindowWidth = 1280;
 static const U32 g_WindowHeight = 720;
 static const wchar_t* g_WindowClassName = L"OnyxWindow";
+
+static Mesh squareMesh;
 
 LRESULT CALLBACK ApplicationWindowProcedure(HWND hwnd, U32 msg, WPARAM wParam, LPARAM lParam) {
   switch (msg) {
@@ -68,6 +71,13 @@ const bool Application::Initialize() {
     Logger::Fatal("Failed to initialize application renderer!");
     ASSERT(false);
   }
+
+  squareMesh.Create({{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+                     {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+                     {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+                     {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}},
+                    {0, 1, 2, 2, 3, 0});
+  Renderer::UploadMesh(squareMesh);
 
   return true;
 }

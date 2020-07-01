@@ -9,6 +9,7 @@
 
 #include "Application.h"
 #include "Logger.h"
+#include "Mesh.h"
 #include "Utilities.h"
 
 #define VkCall(result) \
@@ -31,6 +32,8 @@ static const std::vector<Vertex> g_Vertices = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0
                                                {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
                                                {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
 static const std::vector<U16> g_Indices = {0, 1, 2, 2, 3, 0};
+
+static std::vector<Mesh*> g_MeshesToRender;
 
 #ifdef ONYX_DEBUG
 static const bool g_EnableValidation = true;
@@ -75,8 +78,6 @@ const bool Renderer::Initialize() {
   ASSERT(CreateCommandPools());
   ASSERT(CreateDescriptorSetLayout());
   ASSERT(CreateSwapchainObjects());
-  ASSERT(CreateVertexBuffer());
-  ASSERT(CreateIndexBuffer());
 
   Logger::Info("Renderer finished initialization.");
   return true;
@@ -86,8 +87,9 @@ void Renderer::Shutdown() {
   Logger::Info("Renderer shutting down.");
   vkDeviceWaitIdle(vkContext.Device);
 
-  DestroyIndexBuffer();
-  DestroyVertexBuffer();
+  for (Mesh* mesh : g_MeshesToRender) {
+    mesh->Free(vkContext);
+  }
   DestroySwapchainObjects();
   DestroyDescriptorSetLayout();
   DestroyCommandPools();
@@ -124,10 +126,11 @@ const bool Renderer::Frame() {
   BeginCommandBuffer(cmdBuf);
   BeginRenderPass(cmdBuf, vkContext.SwapchainFramebuffers[imageIndex]);
   BindGraphicsPipeline(cmdBuf);
-  BindVertexBuffers(cmdBuf, {vkContext.VertexBuffer}, {0});
-  BindIndexBuffer(cmdBuf, vkContext.IndexBuffer, 0);
-  BindDescriptorSets(cmdBuf, {vkContext.DescriptorSets[imageIndex]}, 0);
-  DrawIndexed(cmdBuf, static_cast<U32>(g_Indices.size()), 1, 0, 0, 0);
+  for (Mesh* mesh : g_MeshesToRender) {
+    mesh->Bind(cmdBuf);
+    BindDescriptorSets(cmdBuf, {vkContext.DescriptorSets[imageIndex]}, 0);
+    DrawIndexed(cmdBuf, static_cast<U32>(mesh->GetIndexCount()), 1, 0, 0, 0);
+  }
   EndRenderPass(cmdBuf);
   EndCommandBuffer(cmdBuf);
 
@@ -167,6 +170,11 @@ const bool Renderer::Frame() {
   vkContext.CurrentFrame = (vkContext.CurrentFrame + 1) % g_MaxFramesInFlight;
 
   return true;
+}
+
+void Renderer::UploadMesh(Mesh& mesh) {
+  mesh.Upload(vkContext);
+  g_MeshesToRender.push_back(&mesh);
 }
 
 const bool Renderer::CreateInstance() {
@@ -627,54 +635,6 @@ const bool Renderer::CreateFramebuffers() {
   return true;
 }
 
-const bool Renderer::CreateVertexBuffer() {
-  VkDeviceSize bufferSize = sizeof(g_Vertices[0]) * g_Vertices.size();
-
-  VkBuffer stagingBuffer;
-  VkDeviceMemory stagingDeviceMemory;
-  ASSERT(CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      stagingBuffer, stagingDeviceMemory));
-  void* data;
-  vkMapMemory(vkContext.Device, stagingDeviceMemory, 0, bufferSize, 0, &data);
-  memcpy(data, g_Vertices.data(), static_cast<size_t>(bufferSize));
-  vkUnmapMemory(vkContext.Device, stagingDeviceMemory);
-
-  ASSERT(CreateBuffer(
-      bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkContext.VertexBuffer, vkContext.VertexBufferMemory));
-  CopyBuffer(stagingBuffer, vkContext.VertexBuffer, bufferSize);
-
-  vkDestroyBuffer(vkContext.Device, stagingBuffer, nullptr);
-  vkFreeMemory(vkContext.Device, stagingDeviceMemory, nullptr);
-
-  return true;
-}
-
-const bool Renderer::CreateIndexBuffer() {
-  VkDeviceSize bufferSize = sizeof(g_Indices[0]) * g_Indices.size();
-
-  VkBuffer stagingBuffer;
-  VkDeviceMemory stagingDeviceMemory;
-  ASSERT(CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      stagingBuffer, stagingDeviceMemory));
-  void* data;
-  vkMapMemory(vkContext.Device, stagingDeviceMemory, 0, bufferSize, 0, &data);
-  memcpy(data, g_Indices.data(), static_cast<size_t>(bufferSize));
-  vkUnmapMemory(vkContext.Device, stagingDeviceMemory);
-
-  ASSERT(CreateBuffer(
-      bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkContext.IndexBuffer, vkContext.IndexBufferMemory));
-  CopyBuffer(stagingBuffer, vkContext.IndexBuffer, bufferSize);
-
-  vkDestroyBuffer(vkContext.Device, stagingBuffer, nullptr);
-  vkFreeMemory(vkContext.Device, stagingDeviceMemory, nullptr);
-
-  return true;
-}
-
 const bool Renderer::CreateUniformBuffers() {
   VkDeviceSize bufferSize = sizeof(UniformBufferObject);
   vkContext.UniformBuffers.resize(vkContext.SwapchainImageCount, VK_NULL_HANDLE);
@@ -850,16 +810,6 @@ void Renderer::DestroyUniformBuffers() {
     vkDestroyBuffer(vkContext.Device, vkContext.UniformBuffers[i], nullptr);
     vkFreeMemory(vkContext.Device, vkContext.UniformBufferMemories[i], nullptr);
   }
-}
-
-void Renderer::DestroyIndexBuffer() {
-  vkDestroyBuffer(vkContext.Device, vkContext.IndexBuffer, nullptr);
-  vkFreeMemory(vkContext.Device, vkContext.IndexBufferMemory, nullptr);
-}
-
-void Renderer::DestroyVertexBuffer() {
-  vkDestroyBuffer(vkContext.Device, vkContext.VertexBuffer, nullptr);
-  vkFreeMemory(vkContext.Device, vkContext.VertexBufferMemory, nullptr);
 }
 
 void Renderer::FreeGraphicsCommandBuffers() {
@@ -1372,7 +1322,7 @@ U32 Renderer::FindMemoryType(U32 typeFilter, VkMemoryPropertyFlags properties) {
 
 const bool Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
                                   VkMemoryPropertyFlags properties, VkBuffer& buffer,
-                                  VkDeviceMemory& deviceMemory) {
+                                  VkDeviceMemory& deviceMemory, U64* bufferAlignment) {
   VkBufferCreateInfo bufferCreateInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
   bufferCreateInfo.size = size;
   bufferCreateInfo.usage = usage;
@@ -1384,6 +1334,9 @@ const bool Renderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
 
   VkMemoryRequirements memoryRequirements;
   vkGetBufferMemoryRequirements(vkContext.Device, buffer, &memoryRequirements);
+  if (bufferAlignment != nullptr) {
+    *bufferAlignment = memoryRequirements.alignment;
+  }
 
   VkMemoryAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
   allocateInfo.allocationSize = memoryRequirements.size;

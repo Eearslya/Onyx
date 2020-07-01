@@ -9,42 +9,14 @@
 #include <chrono>
 #include <vector>
 
+#include "RendererTypes.h"
+
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace Onyx {
-struct UniformBufferObject {
-  glm::mat4 Model;
-  glm::mat4 View;
-  glm::mat4 Projection;
-};
-
-struct Vertex {
-  glm::vec2 Position;
-  glm::vec3 Color;
-
-  static VkVertexInputBindingDescription GetBindingDescription() {
-    VkVertexInputBindingDescription bindingDescription{};
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Vertex);
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-    return bindingDescription;
-  }
-
-  static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() {
-    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
-    attributeDescriptions[0].binding = 0;
-    attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(Vertex, Position);
-    attributeDescriptions[1].binding = 0;
-    attributeDescriptions[1].location = 1;
-    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Vertex, Color);
-    return attributeDescriptions;
-  }
-};
+class Mesh;
 
 struct VulkanPhysicalDeviceSwapchainSupport {
   VkSurfaceCapabilitiesKHR Capabilities;
@@ -117,10 +89,6 @@ struct VulkanContext {
   std::vector<VkFence> InFlightFences;
   std::vector<VkFence> ImagesInFlight;
   U32 CurrentFrame = 0;
-  VkBuffer VertexBuffer = VK_NULL_HANDLE;
-  VkDeviceMemory VertexBufferMemory = VK_NULL_HANDLE;
-  VkBuffer IndexBuffer = VK_NULL_HANDLE;
-  VkDeviceMemory IndexBufferMemory = VK_NULL_HANDLE;
   std::vector<VkBuffer> UniformBuffers;
   std::vector<VkDeviceMemory> UniformBufferMemories;
   VkDescriptorPool DescriptorPool = VK_NULL_HANDLE;
@@ -132,6 +100,13 @@ class Renderer final {
   static const bool Initialize();
   static void Shutdown();
   static const bool Frame();
+
+  static void UploadMesh(Mesh& mesh);
+
+  static const bool CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
+                                 VkMemoryPropertyFlags properties, VkBuffer& buffer,
+                                 VkDeviceMemory& deviceMemory, U64* alignment = nullptr);
+  static void CopyBuffer(VkBuffer source, VkBuffer destination, VkDeviceSize size);
 
  private:
   // Object creation
@@ -149,8 +124,6 @@ class Renderer final {
   static const bool CreateGraphicsPipeline();
   static VkShaderModule CreateShaderModule(const std::vector<char>& source);
   static const bool CreateFramebuffers();
-  static const bool CreateVertexBuffer();
-  static const bool CreateIndexBuffer();
   static const bool CreateUniformBuffers();
   static const bool CreateDescriptorPool();
   static const bool CreateDescriptorSets();
@@ -163,8 +136,6 @@ class Renderer final {
   static void DestroyDescriptorSets();
   static void DestroyDescriptorPool();
   static void DestroyUniformBuffers();
-  static void DestroyIndexBuffer();
-  static void DestroyVertexBuffer();
   static void FreeGraphicsCommandBuffers();
   static void DestroyCommandPools();
   static void DestroyFramebuffers();
@@ -214,10 +185,6 @@ class Renderer final {
   static void EndRenderPass(VkCommandBuffer buffer);
   static void EndCommandBuffer(VkCommandBuffer buffer);
   static U32 FindMemoryType(U32 typeFilter, VkMemoryPropertyFlags properties);
-  static const bool CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                                 VkMemoryPropertyFlags properties, VkBuffer& buffer,
-                                 VkDeviceMemory& deviceMemory);
-  static void CopyBuffer(VkBuffer source, VkBuffer destination, VkDeviceSize size);
   static void UpdateUniformBuffer(U32 imageIndex);
 };
 }  // namespace Onyx
