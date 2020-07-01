@@ -6,10 +6,20 @@
 #include <vulkan/vulkan.h>
 
 #include <array>
-#include <glm/glm.hpp>
+#include <chrono>
 #include <vector>
 
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace Onyx {
+struct UniformBufferObject {
+  glm::mat4 Model;
+  glm::mat4 View;
+  glm::mat4 Projection;
+};
+
 struct Vertex {
   glm::vec2 Position;
   glm::vec3 Color;
@@ -95,6 +105,7 @@ struct VulkanContext {
   std::vector<VkImage> SwapchainImages;
   std::vector<VkImageView> SwapchainImageViews;
   VkRenderPass RenderPass = VK_NULL_HANDLE;
+  VkDescriptorSetLayout DescriptorSetLayout = VK_NULL_HANDLE;
   VkPipelineLayout PipelineLayout = VK_NULL_HANDLE;
   VkPipeline GraphicsPipeline = VK_NULL_HANDLE;
   std::vector<VkFramebuffer> SwapchainFramebuffers;
@@ -110,6 +121,10 @@ struct VulkanContext {
   VkDeviceMemory VertexBufferMemory = VK_NULL_HANDLE;
   VkBuffer IndexBuffer = VK_NULL_HANDLE;
   VkDeviceMemory IndexBufferMemory = VK_NULL_HANDLE;
+  std::vector<VkBuffer> UniformBuffers;
+  std::vector<VkDeviceMemory> UniformBufferMemories;
+  VkDescriptorPool DescriptorPool = VK_NULL_HANDLE;
+  std::vector<VkDescriptorSet> DescriptorSets;
 };
 
 class Renderer final {
@@ -130,23 +145,31 @@ class Renderer final {
   static const bool CreateSwapchain();
   static const bool CreateSwapchainImages();
   static const bool CreateRenderPass();
+  static const bool CreateDescriptorSetLayout();
   static const bool CreateGraphicsPipeline();
   static VkShaderModule CreateShaderModule(const std::vector<char>& source);
   static const bool CreateFramebuffers();
   static const bool CreateVertexBuffer();
   static const bool CreateIndexBuffer();
+  static const bool CreateUniformBuffers();
+  static const bool CreateDescriptorPool();
+  static const bool CreateDescriptorSets();
   static const bool AllocateGraphicsCommandBuffers();
 
   static const bool RecreateSwapchain();
 
   // Object destruction
   static void DestroySyncObjects();
+  static void DestroyDescriptorSets();
+  static void DestroyDescriptorPool();
+  static void DestroyUniformBuffers();
   static void DestroyIndexBuffer();
   static void DestroyVertexBuffer();
   static void FreeGraphicsCommandBuffers();
   static void DestroyCommandPools();
   static void DestroyFramebuffers();
   static void DestroyShaderModule(VkShaderModule module);
+  static void DestroyDescriptorSetLayout();
   static void DestroyGraphicsPipeline();
   static void DestroyRenderPass();
   static void DestroySwapchainImages();
@@ -182,6 +205,8 @@ class Renderer final {
   static void BindVertexBuffers(VkCommandBuffer buffer, std::vector<VkBuffer> buffers,
                                 std::vector<U64> offsets);
   static void BindIndexBuffer(VkCommandBuffer buffer, VkBuffer indexBuffer, U32 firstIndex);
+  static void BindDescriptorSets(VkCommandBuffer buffer,
+                                 const std::vector<VkDescriptorSet>& descriptorSets, U32 firstSet);
   static void Draw(VkCommandBuffer buffer, U32 vertexCount, U32 instanceCount, U32 firstVertex,
                    U32 firstInstance);
   static void DrawIndexed(VkCommandBuffer buffer, U32 indexCount, U32 instanceCount, U32 firstIndex,
@@ -193,5 +218,6 @@ class Renderer final {
                                  VkMemoryPropertyFlags properties, VkBuffer& buffer,
                                  VkDeviceMemory& deviceMemory);
   static void CopyBuffer(VkBuffer source, VkBuffer destination, VkDeviceSize size);
+  static void UpdateUniformBuffer(U32 imageIndex);
 };
 }  // namespace Onyx

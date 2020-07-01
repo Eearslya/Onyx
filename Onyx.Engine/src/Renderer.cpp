@@ -73,6 +73,7 @@ const bool Renderer::Initialize() {
   ASSERT(CreateDevice());
   ASSERT(GetDeviceQueues());
   ASSERT(CreateCommandPools());
+  ASSERT(CreateDescriptorSetLayout());
   ASSERT(CreateSwapchainObjects());
   ASSERT(CreateVertexBuffer());
   ASSERT(CreateIndexBuffer());
@@ -88,6 +89,7 @@ void Renderer::Shutdown() {
   DestroyIndexBuffer();
   DestroyVertexBuffer();
   DestroySwapchainObjects();
+  DestroyDescriptorSetLayout();
   DestroyCommandPools();
   DestroyDevice();
   DestroySurface();
@@ -116,12 +118,15 @@ const bool Renderer::Frame() {
   }
   vkContext.ImagesInFlight[imageIndex] = vkContext.InFlightFences[vkContext.CurrentFrame];
 
+  UpdateUniformBuffer(imageIndex);
+
   VkCommandBuffer& cmdBuf = vkContext.GraphicsCommandBuffers[imageIndex];
   BeginCommandBuffer(cmdBuf);
   BeginRenderPass(cmdBuf, vkContext.SwapchainFramebuffers[imageIndex]);
   BindGraphicsPipeline(cmdBuf);
   BindVertexBuffers(cmdBuf, {vkContext.VertexBuffer}, {0});
   BindIndexBuffer(cmdBuf, vkContext.IndexBuffer, 0);
+  BindDescriptorSets(cmdBuf, {vkContext.DescriptorSets[imageIndex]}, 0);
   DrawIndexed(cmdBuf, static_cast<U32>(g_Indices.size()), 1, 0, 0, 0);
   EndRenderPass(cmdBuf);
   EndCommandBuffer(cmdBuf);
@@ -411,6 +416,24 @@ const bool Renderer::CreateRenderPass() {
   return vkContext.RenderPass != VK_NULL_HANDLE;
 }
 
+const bool Renderer::CreateDescriptorSetLayout() {
+  VkDescriptorSetLayoutBinding uboLayoutBinding{};
+  uboLayoutBinding.binding = 0;
+  uboLayoutBinding.descriptorCount = 1;
+  uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  uboLayoutBinding.pImmutableSamplers = nullptr;
+
+  VkDescriptorSetLayoutCreateInfo layoutCreateInfo{
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+  layoutCreateInfo.bindingCount = 1;
+  layoutCreateInfo.pBindings = &uboLayoutBinding;
+  VkCall(vkCreateDescriptorSetLayout(vkContext.Device, &layoutCreateInfo, nullptr,
+                                     &vkContext.DescriptorSetLayout));
+
+  return vkContext.DescriptorSetLayout != VK_NULL_HANDLE;
+}
+
 const bool Renderer::CreateGraphicsPipeline() {
   Logger::Trace("Creating graphics pipeline.");
 
@@ -482,7 +505,7 @@ const bool Renderer::CreateGraphicsPipeline() {
   rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = 1.0f;
   rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
   rasterizer.depthBiasConstantFactor = 0.0f;
   rasterizer.depthBiasClamp = 0.0f;
@@ -528,8 +551,8 @@ const bool Renderer::CreateGraphicsPipeline() {
 
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
-  pipelineLayoutCreateInfo.setLayoutCount = 0;
-  pipelineLayoutCreateInfo.pSetLayouts = nullptr;
+  pipelineLayoutCreateInfo.setLayoutCount = 1;
+  pipelineLayoutCreateInfo.pSetLayouts = &vkContext.DescriptorSetLayout;
   pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
   pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 
@@ -652,6 +675,73 @@ const bool Renderer::CreateIndexBuffer() {
   return true;
 }
 
+const bool Renderer::CreateUniformBuffers() {
+  VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+  vkContext.UniformBuffers.resize(vkContext.SwapchainImageCount, VK_NULL_HANDLE);
+  vkContext.UniformBufferMemories.resize(vkContext.SwapchainImageCount, VK_NULL_HANDLE);
+
+  for (U32 i = 0; i < vkContext.SwapchainImageCount; i++) {
+    CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                 vkContext.UniformBuffers[i], vkContext.UniformBufferMemories[i]);
+    if (vkContext.UniformBuffers[i] == VK_NULL_HANDLE) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+const bool Renderer::CreateDescriptorPool() {
+  VkDescriptorPoolSize poolSize{};
+  poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  poolSize.descriptorCount = vkContext.SwapchainImageCount;
+
+  VkDescriptorPoolCreateInfo poolCreateInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+  poolCreateInfo.poolSizeCount = 1;
+  poolCreateInfo.pPoolSizes = &poolSize;
+  poolCreateInfo.maxSets = vkContext.SwapchainImageCount;
+  VkCall(vkCreateDescriptorPool(vkContext.Device, &poolCreateInfo, nullptr,
+                                &vkContext.DescriptorPool));
+
+  return vkContext.DescriptorPool != VK_NULL_HANDLE;
+}
+
+const bool Renderer::CreateDescriptorSets() {
+  std::vector<VkDescriptorSetLayout> layouts(vkContext.SwapchainImageCount,
+                                             vkContext.DescriptorSetLayout);
+
+  VkDescriptorSetAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+  allocateInfo.descriptorPool = vkContext.DescriptorPool;
+  allocateInfo.descriptorSetCount = vkContext.SwapchainImageCount;
+  allocateInfo.pSetLayouts = layouts.data();
+
+  vkContext.DescriptorSets.resize(vkContext.SwapchainImageCount, VK_NULL_HANDLE);
+  VkCall(
+      vkAllocateDescriptorSets(vkContext.Device, &allocateInfo, vkContext.DescriptorSets.data()));
+
+  for (U32 i = 0; i < vkContext.SwapchainImageCount; i++) {
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = vkContext.UniformBuffers[i];
+    bufferInfo.offset = 0;
+    bufferInfo.range = sizeof(UniformBufferObject);
+
+    VkWriteDescriptorSet descriptorWrite{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    descriptorWrite.dstSet = vkContext.DescriptorSets[i];
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &bufferInfo;
+    descriptorWrite.pImageInfo = nullptr;
+    descriptorWrite.pTexelBufferView = nullptr;
+
+    vkUpdateDescriptorSets(vkContext.Device, 1, &descriptorWrite, 0, nullptr);
+  }
+
+  return vkContext.DescriptorSets[0] != VK_NULL_HANDLE;
+}
+
 const bool Renderer::CreateCommandPools() {
   Logger::Trace("Creating command pools.");
 
@@ -722,6 +812,9 @@ const bool Renderer::CreateSwapchainObjects() {
   ASSERT(CreateRenderPass());
   ASSERT(CreateGraphicsPipeline());
   ASSERT(CreateFramebuffers());
+  ASSERT(CreateUniformBuffers());
+  ASSERT(CreateDescriptorPool());
+  ASSERT(CreateDescriptorSets());
   ASSERT(AllocateGraphicsCommandBuffers());
   ASSERT(CreateSyncObjects());
   return true;
@@ -743,6 +836,19 @@ void Renderer::DestroySyncObjects() {
     vkDestroyFence(vkContext.Device, vkContext.InFlightFences[i], nullptr);
     vkDestroySemaphore(vkContext.Device, vkContext.RenderFinishedSemaphores[i], nullptr);
     vkDestroySemaphore(vkContext.Device, vkContext.ImageAvailableSemaphores[i], nullptr);
+  }
+}
+
+void Renderer::DestroyDescriptorSets() {}
+
+void Renderer::DestroyDescriptorPool() {
+  vkDestroyDescriptorPool(vkContext.Device, vkContext.DescriptorPool, nullptr);
+}
+
+void Renderer::DestroyUniformBuffers() {
+  for (U32 i = 0; i < vkContext.SwapchainImageCount; i++) {
+    vkDestroyBuffer(vkContext.Device, vkContext.UniformBuffers[i], nullptr);
+    vkFreeMemory(vkContext.Device, vkContext.UniformBufferMemories[i], nullptr);
   }
 }
 
@@ -777,6 +883,10 @@ void Renderer::DestroyShaderModule(VkShaderModule module) {
   vkDestroyShaderModule(vkContext.Device, module, nullptr);
 }
 
+void Renderer::DestroyDescriptorSetLayout() {
+  vkDestroyDescriptorSetLayout(vkContext.Device, vkContext.DescriptorSetLayout, nullptr);
+}
+
 void Renderer::DestroyGraphicsPipeline() {
   vkDestroyPipeline(vkContext.Device, vkContext.GraphicsPipeline, nullptr);
   vkDestroyPipelineLayout(vkContext.Device, vkContext.PipelineLayout, nullptr);
@@ -798,6 +908,9 @@ void Renderer::DestroySwapchain() {
 
 void Renderer::DestroySwapchainObjects() {
   DestroySyncObjects();
+  DestroyDescriptorSets();
+  DestroyDescriptorPool();
+  DestroyUniformBuffers();
   DestroyFramebuffers();
   DestroyGraphicsPipeline();
   DestroyRenderPass();
@@ -1223,6 +1336,14 @@ void Renderer::BindIndexBuffer(VkCommandBuffer buffer, VkBuffer indexBuffer, U32
   vkCmdBindIndexBuffer(buffer, indexBuffer, firstIndex, VK_INDEX_TYPE_UINT16);
 }
 
+void Renderer::BindDescriptorSets(VkCommandBuffer buffer,
+                                  const std::vector<VkDescriptorSet>& descriptorSets,
+                                  U32 firstSet) {
+  vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkContext.PipelineLayout,
+                          firstSet, static_cast<U32>(descriptorSets.size()), descriptorSets.data(),
+                          0, nullptr);
+}
+
 void Renderer::Draw(VkCommandBuffer buffer, U32 vertexCount, U32 instanceCount, U32 firstVertex,
                     U32 firstInstance) {
   vkCmdDraw(buffer, vertexCount, instanceCount, firstVertex, firstInstance);
@@ -1301,5 +1422,29 @@ void Renderer::CopyBuffer(VkBuffer source, VkBuffer destination, VkDeviceSize si
   vkQueueSubmit(vkContext.TransferQueue, 1, &submitInfo, VK_NULL_HANDLE);
   vkQueueWaitIdle(vkContext.TransferQueue);
   vkFreeCommandBuffers(vkContext.Device, vkContext.TransferCommandPool, 1, &commandBuffer);
+}
+
+void Renderer::UpdateUniformBuffer(U32 imageIndex) {
+  static auto startTime = std::chrono::high_resolution_clock::now();
+
+  auto currentTime = std::chrono::high_resolution_clock::now();
+  float time =
+      std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+  UniformBufferObject ubo{};
+  ubo.Model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.View = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                         glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.Projection = glm::perspective(glm::radians(45.0f),
+                                    static_cast<F32>(vkContext.SwapchainExtent.width) /
+                                        static_cast<F32>(vkContext.SwapchainExtent.height),
+                                    0.1f, 1000.0f);
+  ubo.Projection[1][1] *= -1.0f;
+
+  void* data;
+  vkMapMemory(vkContext.Device, vkContext.UniformBufferMemories[imageIndex], 0, sizeof(ubo), 0,
+              &data);
+  memcpy(data, &ubo, sizeof(ubo));
+  vkUnmapMemory(vkContext.Device, vkContext.UniformBufferMemories[imageIndex]);
 }
 }  // namespace Onyx
