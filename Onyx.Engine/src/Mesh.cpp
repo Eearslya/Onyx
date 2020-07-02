@@ -3,7 +3,7 @@
 #include "Renderer.h"
 
 namespace Onyx {
-const bool Mesh::Create(const std::vector<Vertex>& vertices, const std::vector<U16>& indices) {
+const bool Mesh::Create(const std::vector<Vertex>& vertices, const std::vector<U32>& indices) {
   m_Vertices = vertices;
   m_Indices = indices;
 
@@ -44,7 +44,7 @@ void Mesh::Upload(const VulkanContext& vkContext) {
 void Mesh::Bind(VkCommandBuffer& cmdBuf) {
   const U64 offsets = 0;
   vkCmdBindVertexBuffers(cmdBuf, 0, 1, &m_MeshBuffer, &offsets);
-  vkCmdBindIndexBuffer(cmdBuf, m_MeshBuffer, m_IndicesOffset, VK_INDEX_TYPE_UINT16);
+  vkCmdBindIndexBuffer(cmdBuf, m_MeshBuffer, m_IndicesOffset, VK_INDEX_TYPE_UINT32);
 }
 
 void Mesh::Free(const VulkanContext& vkContext) {

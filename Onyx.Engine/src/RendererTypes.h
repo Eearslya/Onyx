@@ -1,8 +1,10 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
+
 #include <array>
 #include <glm/glm.hpp>
-#include <vulkan/vulkan.h>
+#include <glm/gtx/hash.hpp>
 
 struct UniformBufferObject {
   glm::mat4 Model;
@@ -15,6 +17,11 @@ struct Vertex {
   glm::vec3 Normal;
   glm::vec2 TexCoord;
   glm::vec3 Color;
+
+  bool operator==(const Vertex& other) const {
+    return Position == other.Position && Normal == other.Normal && TexCoord == other.TexCoord &&
+           Color == other.Color;
+  }
 
   static VkVertexInputBindingDescription GetBindingDescription() {
     VkVertexInputBindingDescription bindingDescription{};
@@ -49,3 +56,16 @@ struct Vertex {
     return attributeDescriptions;
   }
 };
+
+namespace std {
+template <>
+struct hash<Vertex> {
+  size_t operator()(Vertex const& vertex) const {
+    glm::mat4 mat;
+    mat[0] = {vertex.Position.x, vertex.Position.y, vertex.Position.z, vertex.TexCoord.x};
+    mat[1] = {vertex.Normal.x, vertex.Normal.y, vertex.Normal.z, vertex.TexCoord.y};
+    mat[2] = {vertex.Color.x, vertex.Color.y, vertex.Color.z, 0.0f};
+    return hash<glm::mat4>{}(mat);
+  }
+};
+}  // namespace std

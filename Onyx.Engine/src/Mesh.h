@@ -14,7 +14,7 @@ struct VulkanContext;
 
 class Mesh final {
  public:
-  const bool Create(const std::vector<Vertex>& vertices, const std::vector<U16>& indices);
+  const bool Create(const std::vector<Vertex>& vertices, const std::vector<U32>& indices);
   void Upload(const VulkanContext& vkContext);
   void Bind(VkCommandBuffer& cmdBuf);
   void Free(const VulkanContext& vkContext);
@@ -22,7 +22,7 @@ class Mesh final {
 
  private:
   std::vector<Vertex> m_Vertices;
-  std::vector<U16> m_Indices;
+  std::vector<U32> m_Indices;
   VkBuffer m_MeshBuffer;
   VkDeviceMemory m_DeviceMemory;
   VkDeviceSize m_IndicesOffset;

@@ -820,7 +820,7 @@ const bool Renderer::AllocateGraphicsCommandBuffers() {
 
 const bool Renderer::CreateTextureImage() {
   I32 textureWidth, textureHeight, textureChannels;
-  stbi_uc* texturePixels = stbi_load("assets/textures/statue.jpg", &textureWidth, &textureHeight,
+  stbi_uc* texturePixels = stbi_load("assets/textures/vokselia_spawn.png", &textureWidth, &textureHeight,
                                      &textureChannels, STBI_rgb_alpha);
 
   ASSERT_MSG(texturePixels, "Failed to load texture image!");
@@ -1476,7 +1476,7 @@ void Renderer::BindVertexBuffers(VkCommandBuffer buffer, std::vector<VkBuffer> b
 }
 
 void Renderer::BindIndexBuffer(VkCommandBuffer buffer, VkBuffer indexBuffer, U32 firstIndex) {
-  vkCmdBindIndexBuffer(buffer, indexBuffer, firstIndex, VK_INDEX_TYPE_UINT16);
+  vkCmdBindIndexBuffer(buffer, indexBuffer, firstIndex, VK_INDEX_TYPE_UINT32);
 }
 
 void Renderer::BindDescriptorSets(VkCommandBuffer buffer,
@@ -1649,9 +1649,12 @@ void Renderer::UpdateUniformBuffer(U32 imageIndex) {
       std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
   UniformBufferObject ubo{};
-  F32 cameraPos = 2.0f;
-  ubo.Model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-  ubo.View = glm::lookAt(glm::vec3(cameraPos, cameraPos, cameraPos), glm::vec3(0.0f, 0.0f, 0.0f),
+  F32 cameraPos = 0.0f;
+  ubo.Model = glm::mat4(1.0f);
+  ubo.Model = glm::rotate(ubo.Model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+  //ubo.Model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.Model = glm::scale(ubo.Model, glm::vec3(10.0f, 10.0f, 10.0f));
+  ubo.View = glm::lookAt(glm::vec3(1.5f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 1.0f),
                          glm::vec3(0.0f, 0.0f, 1.0f));
   ubo.Projection = glm::perspective(glm::radians(45.0f),
                                     static_cast<F32>(vkContext.SwapchainExtent.width) /
