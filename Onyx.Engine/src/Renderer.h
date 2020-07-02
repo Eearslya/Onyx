@@ -62,7 +62,6 @@ struct VulkanContext {
   VkInstance Instance = VK_NULL_HANDLE;
   VkDebugUtilsMessengerEXT DebugMessenger = VK_NULL_HANDLE;
   VkSurfaceKHR Surface = VK_NULL_HANDLE;
-  std::vector<VulkanPhysicalDeviceInfo> PhysicalDevices;
   VkPhysicalDevice PhysicalDevice = VK_NULL_HANDLE;
   VulkanPhysicalDeviceInfo PhysicalDeviceInfo;
   VkDevice Device = VK_NULL_HANDLE;

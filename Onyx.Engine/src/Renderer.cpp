@@ -27,12 +27,6 @@ static const std::vector<const char*> g_RequiredDeviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 static const U32 g_MaxFramesInFlight = 2;
 
-static const std::vector<Vertex> g_Vertices = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-                                               {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-                                               {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-                                               {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
-static const std::vector<U16> g_Indices = {0, 1, 2, 2, 3, 0};
-
 static std::vector<Mesh*> g_MeshesToRender;
 
 #ifdef ONYX_DEBUG
@@ -955,19 +949,19 @@ const bool Renderer::SelectPhysicalDevice() {
   }
   Logger::Trace("Found %d Vulkan devices.", deviceCount);
   std::vector<VkPhysicalDevice> devices(deviceCount);
+  std::vector<VulkanPhysicalDeviceInfo> deviceInfos(deviceCount);
   VkCall(vkEnumeratePhysicalDevices(vkContext.Instance, &deviceCount, devices.data()));
 
-  vkContext.PhysicalDevices.resize(deviceCount);
   for (U32 i = 0; i < deviceCount; i++) {
-    vkContext.PhysicalDevices[i].Device = devices[i];
-    QueryPhysicalDeviceInfo(devices[i], vkContext.PhysicalDevices[i]);
-    DumpPhysicalDeviceInfo(vkContext.PhysicalDevices[i]);
+    deviceInfos[i].Device = devices[i];
+    QueryPhysicalDeviceInfo(devices[i], deviceInfos[i]);
+    DumpPhysicalDeviceInfo(deviceInfos[i]);
   }
 
   for (U32 i = 0; i < deviceCount; i++) {
-    if (ValidatePhysicalDevice(vkContext.PhysicalDevices[i])) {
-      vkContext.PhysicalDevice = vkContext.PhysicalDevices[i].Device;
-      vkContext.PhysicalDeviceInfo = vkContext.PhysicalDevices[i];
+    if (ValidatePhysicalDevice(deviceInfos[i])) {
+      vkContext.PhysicalDevice = deviceInfos[i].Device;
+      vkContext.PhysicalDeviceInfo = deviceInfos[i];
     }
   }
 
@@ -1385,8 +1379,9 @@ void Renderer::UpdateUniformBuffer(U32 imageIndex) {
       std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
   UniformBufferObject ubo{};
-  ubo.Model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-  ubo.View = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+  F32 cameraPos = 2.0f;
+  ubo.Model = glm::rotate(glm::mat4(1.0f), time * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  ubo.View = glm::lookAt(glm::vec3(cameraPos, cameraPos, cameraPos), glm::vec3(0.0f, 0.0f, 0.0f),
                          glm::vec3(0.0f, 0.0f, 1.0f));
   ubo.Projection = glm::perspective(glm::radians(45.0f),
                                     static_cast<F32>(vkContext.SwapchainExtent.width) /

@@ -10,6 +10,7 @@
     <ClInclude Include="src\Utilities.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\RendererTypes.h" />
+    <ClInclude Include="vendor\tinyobjloader\tiny_obj_loader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Application.cpp" />

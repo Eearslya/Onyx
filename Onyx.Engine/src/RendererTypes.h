@@ -11,7 +11,9 @@ struct UniformBufferObject {
 };
 
 struct Vertex {
-  glm::vec2 Position;
+  glm::vec3 Position;
+  glm::vec3 Normal;
+  glm::vec2 TexCoord;
   glm::vec3 Color;
 
   static VkVertexInputBindingDescription GetBindingDescription() {
@@ -22,16 +24,28 @@ struct Vertex {
     return bindingDescription;
   }
 
-  static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() {
-    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+  static std::array<VkVertexInputAttributeDescription, 4> GetAttributeDescriptions() {
+    std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
+    // Position
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
     attributeDescriptions[0].offset = offsetof(Vertex, Position);
+    // Normal
     attributeDescriptions[1].binding = 0;
     attributeDescriptions[1].location = 1;
     attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Vertex, Color);
+    attributeDescriptions[1].offset = offsetof(Vertex, Normal);
+    // TexCoord
+    attributeDescriptions[2].binding = 0;
+    attributeDescriptions[2].location = 2;
+    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[2].offset = offsetof(Vertex, TexCoord);
+    // Color
+    attributeDescriptions[3].binding = 0;
+    attributeDescriptions[3].location = 3;
+    attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[3].offset = offsetof(Vertex, Color);
     return attributeDescriptions;
   }
 };
