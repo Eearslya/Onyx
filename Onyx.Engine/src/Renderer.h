@@ -92,6 +92,10 @@ struct VulkanContext {
   std::vector<VkDeviceMemory> UniformBufferMemories;
   VkDescriptorPool DescriptorPool = VK_NULL_HANDLE;
   std::vector<VkDescriptorSet> DescriptorSets;
+  VkImage TextureImage = VK_NULL_HANDLE;
+  VkDeviceMemory TextureImageMemory = VK_NULL_HANDLE;
+  VkImageView TextureImageView = VK_NULL_HANDLE;
+  VkSampler TextureSampler = VK_NULL_HANDLE;
 };
 
 class Renderer final {
@@ -106,6 +110,10 @@ class Renderer final {
                                  VkMemoryPropertyFlags properties, VkBuffer& buffer,
                                  VkDeviceMemory& deviceMemory, U64* alignment = nullptr);
   static void CopyBuffer(VkBuffer source, VkBuffer destination, VkDeviceSize size);
+  static void CopyBufferToImage(VkBuffer source, VkImage destination, U32 width, U32 height);
+  static const bool CreateImage(U32 width, U32 height, VkFormat format, VkImageTiling tiling,
+                                VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
+                                VkImage& image, VkDeviceMemory& memory);
 
  private:
   // Object creation
@@ -127,10 +135,16 @@ class Renderer final {
   static const bool CreateDescriptorPool();
   static const bool CreateDescriptorSets();
   static const bool AllocateGraphicsCommandBuffers();
+  static const bool CreateTextureImage();
+  static const bool CreateTextureImageView();
+  static const bool CreateTextureSampler();
 
   static const bool RecreateSwapchain();
 
   // Object destruction
+  static void DestroyTextureSampler();
+  static void DestroyTextureImageView();
+  static void DestroyTextureImage();
   static void DestroySyncObjects();
   static void DestroyDescriptorSets();
   static void DestroyDescriptorPool();
@@ -185,5 +199,9 @@ class Renderer final {
   static void EndCommandBuffer(VkCommandBuffer buffer);
   static U32 FindMemoryType(U32 typeFilter, VkMemoryPropertyFlags properties);
   static void UpdateUniformBuffer(U32 imageIndex);
+  static VkCommandBuffer BeginSingleCommandBuffer();
+  static void EndSingleCommandBuffer(VkCommandBuffer buffer);
+  static void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout srcLayout,
+                                    VkImageLayout dstLayout);
 };
 }  // namespace Onyx

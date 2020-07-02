@@ -60,7 +60,7 @@
       <PreprocessorDefinitions>ONYX_BUILD_LIB;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Onyx.Engine\vendor\tinyobjloader;$(SolutionDir)Onyx.Engine\vendor\glm;$(SolutionDir)Onyx.Engine\src\;C:\VulkanSDK\1.2.135.0\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Onyx.Engine\vendor\stb_image;$(SolutionDir)Onyx.Engine\vendor\tinyobjloader;$(SolutionDir)Onyx.Engine\vendor\glm;$(SolutionDir)Onyx.Engine\src\;C:\VulkanSDK\1.2.135.0\Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -78,7 +78,7 @@
       <PreprocessorDefinitions>ONYX_BUILD_LIB;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Onyx.Engine\vendor\tinyobjloader;$(SolutionDir)Onyx.Engine\vendor\glm;$(SolutionDir)Onyx.Engine\src\;C:\VulkanSDK\1.2.135.0\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Onyx.Engine\vendor\stb_image;$(SolutionDir)Onyx.Engine\vendor\tinyobjloader;$(SolutionDir)Onyx.Engine\vendor\glm;$(SolutionDir)Onyx.Engine\src\;C:\VulkanSDK\1.2.135.0\Include</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>

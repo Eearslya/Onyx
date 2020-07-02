@@ -3,6 +3,9 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include "Logger.h"
 #include "Mesh.h"
 #include "Renderer.h"
@@ -76,14 +79,14 @@ const bool Application::Initialize() {
     ASSERT(false);
   }
 
-  squareMesh.Create({{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-                     {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-                     {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-                     {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}}},
+  squareMesh.Create({{{-0.5f, -0.5f, 0.0f}, {}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+                     {{0.5f, -0.5f, 0.0f}, {}, {1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+                     {{0.5f, 0.5f, 0.0f}, {}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+                     {{-0.5f, 0.5f, 0.0f}, {}, {0.0f, 1.0f}, {1.0f, 1.0f, 1.0f}}},
                     {0, 1, 2, 2, 3, 0});
-  // Renderer::UploadMesh(squareMesh);
+  Renderer::UploadMesh(squareMesh);
 
-#if 1
+#if 0
   std::string objectFile = "assets/models/cube.obj";
   tinyobj::attrib_t objectAttribs;
   std::vector<tinyobj::shape_t> objectShapes;
