@@ -12,6 +12,7 @@
 #include "RendererTypes.h"
 
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -96,6 +97,9 @@ struct VulkanContext {
   VkDeviceMemory TextureImageMemory = VK_NULL_HANDLE;
   VkImageView TextureImageView = VK_NULL_HANDLE;
   VkSampler TextureSampler = VK_NULL_HANDLE;
+  VkImage DepthImage = VK_NULL_HANDLE;
+  VkDeviceMemory DepthImageMemory = VK_NULL_HANDLE;
+  VkImageView DepthImageView = VK_NULL_HANDLE;
 };
 
 class Renderer final {
@@ -122,6 +126,7 @@ class Renderer final {
   static const bool CreateSurface();
   static const bool CreateDevice();
   static const bool CreateCommandPools();
+  static const bool CreateDepthResources();
   static const bool CreateSyncObjects();
   static const bool CreateSwapchainObjects();
   static const bool CreateSwapchain();
@@ -150,6 +155,7 @@ class Renderer final {
   static void DestroyDescriptorPool();
   static void DestroyUniformBuffers();
   static void FreeGraphicsCommandBuffers();
+  static void DestroyDepthResources();
   static void DestroyCommandPools();
   static void DestroyFramebuffers();
   static void DestroyShaderModule(VkShaderModule module);
@@ -203,5 +209,9 @@ class Renderer final {
   static void EndSingleCommandBuffer(VkCommandBuffer buffer);
   static void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout srcLayout,
                                     VkImageLayout dstLayout);
+  static VkFormat FindImageFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
+                                  VkFormatFeatureFlags features);
+  static VkFormat FindDepthFormat();
+  static bool HasStencilComponent(VkFormat format);
 };
 }  // namespace Onyx
