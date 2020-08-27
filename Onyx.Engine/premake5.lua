@@ -16,7 +16,8 @@ project "Onyx.Engine"
 	}
 
 	includedirs {
-		"src"
+		"src",
+		"%{IncludeDir.spdlog}"
 	}
 
 	filter "system:windows"

@@ -21,6 +21,9 @@ workspace "Onyx"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+IncludeDir = {}
+IncludeDir["spdlog"] = "%{wks.location}/Onyx.Engine/vendor/spdlog/include"
+
 group "Utilities"
 	include "vendor/premake"
 group ""
