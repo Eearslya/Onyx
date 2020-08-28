@@ -1,8 +1,10 @@
 #include <Onyx.h>
 
+class SandboxLayer : public Onyx::Layer {};
+
 class Sandbox : public Onyx::Application {
  public:
-  Sandbox() {}
+  Sandbox() { PushLayer(Onyx::CreateRef<SandboxLayer>()); }
   ~Sandbox() {}
 };
 

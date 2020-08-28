@@ -20,6 +20,10 @@ void Application::Run() {
 
   glClearColor(1, 0, 1, 1);
   while (m_Running) {
+    for (auto layer : m_Layers) {
+      layer->OnUpdate();
+    }
+
     glClear(GL_COLOR_BUFFER_BIT);
 
     m_Window->OnUpdate();
@@ -30,7 +34,41 @@ void Application::OnEvent(const Event& e) {
   switch (e.GetEventType()) {
     case EventType::WindowClosed:
       m_Running = false;
+      return;
+  }
+
+  for (auto it = m_Layers.rbegin(); it != m_Layers.rend(); ++it) {
+    if ((*it)->OnEvent(e)) {
       break;
+    }
+  }
+}
+
+void Application::PushLayer(Ref<Layer> layer) {
+  m_Layers.emplace(m_Layers.begin() + m_LayerInsertIndex, layer);
+  m_LayerInsertIndex++;
+  layer->OnAttach();
+}
+
+void Application::PushOverlay(Ref<Layer> overlay) {
+  m_Layers.emplace_back(overlay);
+  overlay->OnAttach();
+}
+
+void Application::PopOverlay(Ref<Layer> overlay) {
+  auto it = std::find(m_Layers.begin() + m_LayerInsertIndex, m_Layers.end(), overlay);
+  if (it != m_Layers.end()) {
+    overlay->OnDetach();
+    m_Layers.erase(it);
+  }
+}
+
+void Application::PopLayer(Ref<Layer> layer) {
+  auto it = std::find(m_Layers.begin(), m_Layers.begin() + m_LayerInsertIndex, layer);
+  if (it != m_Layers.end()) {
+    layer->OnDetach();
+    m_Layers.erase(it);
+    m_LayerInsertIndex--;
   }
 }
 }  // namespace Onyx
