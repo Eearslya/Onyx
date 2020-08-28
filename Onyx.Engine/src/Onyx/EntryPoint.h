@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Onyx/Core.h"
+#include "Onyx/Log.h"
 
 extern Onyx::Application* Onyx::CreateApplication();
 

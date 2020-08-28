@@ -1,14 +1,19 @@
 #pragma once
 
 #include "Onyx/Core.h"
+#include "Onyx/Window.h"
 
 namespace Onyx {
-class ONYX_API Application {
+class Application {
  public:
-  Application();
-  virtual ~Application();
+  ONYX_API Application();
+  ONYX_API virtual ~Application();
 
-  void Run();
+  ONYX_API void Run();
+
+ private:
+  Scope<Window> m_Window;
+  bool m_Running = false;
 };
 
 Application* CreateApplication();

@@ -13,7 +13,8 @@ project "Onyx.Sandbox"
 
 	includedirs {
 		"src",
-		"%{wks.location}/Onyx.Engine/src"
+		"%{wks.location}/Onyx.Engine/src",
+		"%{IncludeDir.spdlog}"
 	}
 
 	links {

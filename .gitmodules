@@ -1,3 +1,6 @@
 [submodule "Onyx.Engine/vendor/spdlog"]
 	path = Onyx.Engine/vendor/spdlog
 	url = ../../gabime/spdlog.git
+[submodule "Onyx.Engine/vendor/GLFW"]
+	path = Onyx.Engine/vendor/GLFW
+	url = ../../Eearslya/glfw.git
