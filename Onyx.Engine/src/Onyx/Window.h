@@ -9,19 +9,25 @@ struct WindowProps {
   unsigned int Height;
 };
 
-class ONYX_API Window {
+// Struct to be defined by each platform implementation,
+// free to store any and all necessary data for that platform.
+struct WindowData;
+
+class ONYX_API Window final {
  public:
-  virtual ~Window() = default;
+  Window(const WindowProps& props);
+  ~Window();
 
-  virtual void OnUpdate() = 0;
+  void OnUpdate();
 
-  virtual unsigned int GetWidth() const = 0;
-  virtual unsigned int GetHeight() const = 0;
+  unsigned int GetWidth() const;
+  unsigned int GetHeight() const;
 
-  virtual void SetVSync(bool enabled) = 0;
-  virtual bool IsVSync() const = 0;
-  virtual bool CloseRequested() const = 0;
+  void SetVSync(bool enabled);
+  bool IsVSync() const;
+  bool CloseRequested() const;
 
-  static Scope<Window> Create(const WindowProps& props);
+ private:
+  WindowData* m_Data;
 };
 }  // namespace Onyx

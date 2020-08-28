@@ -10,7 +10,7 @@ namespace Onyx {
 Application::Application() {
   WindowProps props{"Onyx", 1600, 900};
 
-  m_Window = Window::Create(props);
+  m_Window = CreateScope<Window>(props);
 
   EventBus::Listen<WindowClosedEvent>([this](const Event& e) -> bool {
     m_Running = false;
