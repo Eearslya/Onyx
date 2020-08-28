@@ -15,6 +15,7 @@ struct WindowData {
   unsigned int Width = 0;
   unsigned int Height = 0;
   bool VSync = false;
+  std::function<void(const Event&)> Callback = nullptr;
 };
 
 static void GLFWError(int error, const char* description) {
@@ -44,46 +45,81 @@ Window::Window(const WindowProps& props) {
                    monitorY + (mode->height - windowH) / 2);
 
   glfwMakeContextCurrent(m_Data->Window);
+  glfwSetWindowUserPointer(m_Data->Window, m_Data);
   SetVSync(true);
 
   glfwSetWindowSizeCallback(m_Data->Window, [](GLFWwindow* window, int width, int height) {
-    EventBus::Dispatch(WindowResizedEvent(width, height));
+    WindowData& data = *reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
+    data.Width = width;
+    data.Height = height;
+
+    if (!data.Callback) {
+      return;
+    }
+
+    data.Callback(WindowResizedEvent(width, height));
   });
 
-  glfwSetWindowCloseCallback(m_Data->Window,
-                             [](GLFWwindow* window) { EventBus::Dispatch(WindowClosedEvent()); });
+  glfwSetWindowCloseCallback(m_Data->Window, [](GLFWwindow* window) {
+    WindowData& data = *reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
+    if (!data.Callback) {
+      return;
+    }
 
-  glfwSetKeyCallback(m_Data->Window,
-                     [](GLFWwindow* window, int key, int scancode, int action, int mods) {
-                       switch (action) {
-                         case GLFW_PRESS:
-                         case GLFW_REPEAT:
-                           EventBus::Dispatch(KeyPressedEvent(key));
-                           break;
-                         case GLFW_RELEASE:
-                           EventBus::Dispatch(KeyReleasedEvent(key));
-                           break;
-                       }
-                     });
+    data.Callback(WindowClosedEvent());
+  });
 
-  glfwSetMouseButtonCallback(m_Data->Window,
-                             [](GLFWwindow* window, int button, int action, int mods) {
-                               switch (action) {
-                                 case GLFW_PRESS:
-                                   EventBus::Dispatch(MousePressedEvent(button));
-                                   break;
-                                 case GLFW_RELEASE:
-                                   EventBus::Dispatch(MouseReleasedEvent(button));
-                                   break;
-                               }
-                             });
+  glfwSetKeyCallback(
+      m_Data->Window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+        WindowData& data = *reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
+        if (!data.Callback) {
+          return;
+        }
+
+        switch (action) {
+          case GLFW_PRESS:
+          case GLFW_REPEAT:
+            data.Callback(KeyPressedEvent(key));
+            break;
+          case GLFW_RELEASE:
+            data.Callback(KeyReleasedEvent(key));
+            break;
+        }
+      });
+
+  glfwSetMouseButtonCallback(
+      m_Data->Window, [](GLFWwindow* window, int button, int action, int mods) {
+        WindowData& data = *reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
+        if (!data.Callback) {
+          return;
+        }
+
+        switch (action) {
+          case GLFW_PRESS:
+            data.Callback(MousePressedEvent(button));
+            break;
+          case GLFW_RELEASE:
+            data.Callback(MouseReleasedEvent(button));
+            break;
+        }
+      });
 
   glfwSetScrollCallback(m_Data->Window, [](GLFWwindow* window, double x, double y) {
-    EventBus::Dispatch(MouseScrolledEvent(y));
+    WindowData& data = *reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
+    if (!data.Callback) {
+      return;
+    }
+
+    data.Callback(MouseScrolledEvent(y));
   });
 
   glfwSetCursorPosCallback(m_Data->Window, [](GLFWwindow* window, double x, double y) {
-    EventBus::Dispatch(MouseMovedEvent(x, y));
+    WindowData& data = *reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
+    if (!data.Callback) {
+      return;
+    }
+
+    data.Callback(MouseMovedEvent(x, y));
   });
 }
 
@@ -96,6 +132,8 @@ void Window::OnUpdate() {
   glfwPollEvents();
   glfwSwapBuffers(m_Data->Window);
 }
+
+void Window::SetCallback(std::function<void(const Event&)> func) { m_Data->Callback = func; }
 
 unsigned int Window::GetWidth() const { return m_Data->Width; };
 

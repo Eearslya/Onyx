@@ -29,28 +29,4 @@ class ONYX_API Event {
   virtual EventType GetEventType() const = 0;
   virtual const char* GetName() const = 0;
 };
-
-class EventBus {
-  using Callback = std::function<bool(const Event&)>;
-
- public:
-  template <typename T>
-  static void Listen(Callback callback) {
-    EventType type = T::GetStaticType();
-    s_Listeners[type].push_back(callback);
-  }
-
-  template <typename T>
-  static void Dispatch(const T& e) {
-    EventType type = T::GetStaticType();
-    for (auto& func : s_Listeners[type]) {
-      if (func(e)) {
-        break;
-      }
-    }
-  }
-
- private:
-  static std::unordered_map<EventType, std::list<Callback>> s_Listeners;
-};
 }  // namespace Onyx

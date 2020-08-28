@@ -8,14 +8,9 @@
 
 namespace Onyx {
 Application::Application() {
-  WindowProps props{"Onyx", 1600, 900};
-
+  constexpr WindowProps props{"Onyx", 1600, 900};
   m_Window = CreateScope<Window>(props);
-
-  EventBus::Listen<WindowClosedEvent>([this](const Event& e) -> bool {
-    m_Running = false;
-    return true;
-  });
+  m_Window->SetCallback([this](const Event& e) { OnEvent(e); });
 }
 
 Application::~Application() {}
@@ -28,6 +23,14 @@ void Application::Run() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     m_Window->OnUpdate();
+  }
+}
+
+void Application::OnEvent(const Event& e) {
+  switch (e.GetEventType()) {
+    case EventType::WindowClosed:
+      m_Running = false;
+      break;
   }
 }
 }  // namespace Onyx

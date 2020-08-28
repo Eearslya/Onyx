@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Onyx/Core.h"
+#include "Onyx/Events/Event.h"
 #include "Onyx/Window.h"
 
 namespace Onyx {
@@ -10,6 +11,7 @@ class Application {
   ONYX_API virtual ~Application();
 
   ONYX_API void Run();
+  ONYX_API void OnEvent(const Event& e);
 
  private:
   Scope<Window> m_Window;

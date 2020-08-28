@@ -1,6 +1,9 @@
 #pragma once
 
+#include <functional>
+
 #include "Onyx/Core.h"
+#include "Onyx/Events/Event.h"
 
 namespace Onyx {
 struct WindowProps {
@@ -19,6 +22,7 @@ class ONYX_API Window final {
   ~Window();
 
   void OnUpdate();
+  void SetCallback(std::function<void(const Event&)> e);
 
   unsigned int GetWidth() const;
   unsigned int GetHeight() const;
