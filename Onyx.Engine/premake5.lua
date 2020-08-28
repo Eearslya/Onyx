@@ -2,6 +2,9 @@ project "Onyx.Engine"
 	kind "SharedLib"
 	language "C++"
 	cppdialect "C++17"
+
+	pchheader "pch.h"
+	pchsource "Onyx.Engine/src/pch.cpp"
 	
 	targetdir ("%{wks.location}/bin/" .. outputdir)
 	objdir ("%{wks.location}/obj/" .. outputdir .. "/%{prj.name}")

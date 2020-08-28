@@ -1,10 +1,11 @@
+#include "pch.h"
+
 #include "Log.h"
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
 #include <cstdarg>
-#include <memory>
 
 namespace Onyx {
 static std::shared_ptr<spdlog::logger> g_CoreLogger;
