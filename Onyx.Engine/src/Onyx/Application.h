@@ -16,6 +16,9 @@ class Application {
 
   ONYX_API void Run();
   ONYX_API void OnEvent(const Event& e);
+  ONYX_API Scope<Window>& GetWindow() { return m_Window; }
+
+  static ONYX_API Application& Get() { return *s_Application; }
 
  protected:
   ONYX_API void PushLayer(Ref<Layer> layer);
@@ -28,6 +31,8 @@ class Application {
   bool m_Running = false;
   std::vector<Ref<Layer>> m_Layers;
   unsigned int m_LayerInsertIndex = 0;
+
+  static Application* s_Application;
 };
 
 Application* CreateApplication();

@@ -20,17 +20,22 @@ project "Onyx.Engine"
 
 	includedirs {
 		"src",
+		"%{IncludeDir.Glad}",
 		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.imgui}",
 		"%{IncludeDir.spdlog}"
 	}
 
 	links {
+		"Glad",
 		"GLFW",
+		"imgui",
 		"opengl32.lib"
 	}
 
 	filter "system:windows"
 		systemversion "latest"
+		defines "GLFW_INCLUDE_NONE"
 
 	filter "configurations:Debug"
 		defines "ONYX_DEBUG"

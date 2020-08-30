@@ -4,3 +4,6 @@
 [submodule "Onyx.Engine/vendor/GLFW"]
 	path = Onyx.Engine/vendor/GLFW
 	url = ../../Eearslya/glfw.git
+[submodule "Onyx.Engine/vendor/imgui"]
+	path = Onyx.Engine/vendor/imgui
+	url = ../../Eearslya/imgui.git

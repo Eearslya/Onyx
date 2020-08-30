@@ -9,9 +9,9 @@ class ONYX_API Layer {
   Layer() = default;
   virtual ~Layer() = default;
 
-  void OnAttach() {}
-  void OnDetach() {}
-  void OnUpdate() {}
-  bool OnEvent(const Event& e) { return false; }
+  virtual void OnAttach() {}
+  virtual void OnDetach() {}
+  virtual void OnUpdate() {}
+  virtual bool OnEvent(const Event& e) { return false; }
 };
 }  // namespace Onyx

@@ -2,12 +2,17 @@
 
 #include "Application.h"
 
-#include <GLFW/glfw3.h>
+#include <glad/glad.h>
 
 #include "Onyx/Events/ApplicationEvent.h"
 
 namespace Onyx {
+Application* Application::s_Application = nullptr;
+
 Application::Application() {
+  OnyxAssert(s_Application == nullptr, "Application initialized more than once!");
+  s_Application = this;
+
   constexpr WindowProps props{"Onyx", 1600, 900};
   m_Window = CreateScope<Window>(props);
   m_Window->SetCallback([this](const Event& e) { OnEvent(e); });
@@ -20,11 +25,11 @@ void Application::Run() {
 
   glClearColor(1, 0, 1, 1);
   while (m_Running) {
+    glClear(GL_COLOR_BUFFER_BIT);
+
     for (auto layer : m_Layers) {
       layer->OnUpdate();
     }
-
-    glClear(GL_COLOR_BUFFER_BIT);
 
     m_Window->OnUpdate();
   }

@@ -3,6 +3,7 @@
 #ifdef ONYX_PLATFORM_WINDOWS
 
 #include <GLFW/glfw3.h>
+#include <glad/glad.h>
 
 #include "Onyx/Events/ApplicationEvent.h"
 #include "Onyx/Events/KeyEvent.h"
@@ -29,7 +30,8 @@ Window::Window(const WindowProps& props) {
 
   OnyxInfo("Creating window of size {0}x{1}", m_Data->Width, m_Data->Height);
 
-  OnyxAssert(glfwInit());
+  int init = glfwInit();
+  OnyxAssert(init, "Failed to initialize GLFW");
   glfwSetErrorCallback(GLFWError);
 
   m_Data->Window = glfwCreateWindow(m_Data->Width, m_Data->Height, props.Title, nullptr, nullptr);
@@ -47,6 +49,8 @@ Window::Window(const WindowProps& props) {
   glfwMakeContextCurrent(m_Data->Window);
   glfwSetWindowUserPointer(m_Data->Window, m_Data);
   SetVSync(true);
+  int glad = gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress));
+  OnyxAssert(glad, "Failed to initialize Glad");
 
   glfwSetWindowSizeCallback(m_Data->Window, [](GLFWwindow* window, int width, int height) {
     WindowData& data = *reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
