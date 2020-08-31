@@ -9,17 +9,17 @@
 
 #ifdef ONYX_PLATFORM_WINDOWS
 namespace Onyx {
-bool Input::IsKeyPressed(int keycode) {
+bool Input::IsKeyPressed(Key keycode) {
   auto window = static_cast<GLFWwindow*>(Application::Get().GetWindow()->GetNativeHandle());
-  int keyState = glfwGetKey(window, keycode);
+  int keyState = glfwGetKey(window, static_cast<int>(keycode));
 
   return keyState == GLFW_PRESS || keyState == GLFW_REPEAT;
 }
 
-bool Input::IsMousePressed(int button) {
+bool Input::IsMousePressed(MouseButton button) {
   auto window = static_cast<GLFWwindow*>(Application::Get().GetWindow()->GetNativeHandle());
 
-  return glfwGetMouseButton(window, button) == GLFW_PRESS;
+  return glfwGetMouseButton(window, static_cast<int>(button)) == GLFW_PRESS;
 }
 
 void Input::GetMousePos(float* x, float* y) {

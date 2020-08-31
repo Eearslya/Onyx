@@ -1,12 +1,14 @@
 #pragma once
 
 #include "Onyx/Core.h"
+#include "Onyx/KeyCodes.h"
+#include "Onyx/MouseButtonCodes.h"
 
 namespace Onyx {
 class ONYX_API Input final {
  public:
-  static bool IsKeyPressed(int keycode);
-  static bool IsMousePressed(int button);
+  static bool IsKeyPressed(Key keycode);
+  static bool IsMousePressed(MouseButton button);
   static void GetMousePos(float* x, float* y);
   static float GetMouseX();
   static float GetMouseY();
