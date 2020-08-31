@@ -40,6 +40,10 @@ void Application::OnEvent(const Event& e) {
     case EventType::WindowClosed:
       m_Running = false;
       return;
+    case EventType::WindowResized:
+      auto evt = reinterpret_cast<const WindowResizedEvent&>(e);
+      glViewport(0, 0, evt.Width, evt.Height);
+      break;
   }
 
   for (auto it = m_Layers.rbegin(); it != m_Layers.rend(); ++it) {

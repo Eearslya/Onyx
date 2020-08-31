@@ -6,3 +6,5 @@
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
+
+imgui.ini

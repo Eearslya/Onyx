@@ -20,4 +20,13 @@ class ONYX_API KeyReleasedEvent : public Event {
 
   EVENT_CLASS_TYPE(KeyReleased);
 };
+
+class ONYX_API KeyTypedEvent : public Event {
+ public:
+  KeyTypedEvent(unsigned int keyCode) : KeyCode(keyCode) {}
+
+  unsigned int KeyCode;
+
+  EVENT_CLASS_TYPE(KeyTyped);
+};
 }  // namespace Onyx

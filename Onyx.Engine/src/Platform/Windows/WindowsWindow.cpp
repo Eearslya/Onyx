@@ -91,6 +91,16 @@ Window::Window(const WindowProps& props) {
         }
       });
 
+  glfwSetCharCallback(m_Data->Window, [](GLFWwindow* window, unsigned int keycode) {
+    WindowData& data = *reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
+
+    if (!data.Callback) {
+      return;
+    }
+
+    data.Callback(KeyTypedEvent(keycode));
+  });
+
   glfwSetMouseButtonCallback(
       m_Data->Window, [](GLFWwindow* window, int button, int action, int mods) {
         WindowData& data = *reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));

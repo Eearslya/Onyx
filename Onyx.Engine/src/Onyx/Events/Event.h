@@ -13,6 +13,7 @@ enum class EventType {
   WindowResized,
   KeyPressed,
   KeyReleased,
+  KeyTyped,
   MousePressed,
   MouseReleased,
   MouseMoved,
