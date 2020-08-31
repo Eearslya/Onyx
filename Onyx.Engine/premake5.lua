@@ -11,7 +11,9 @@ project "Onyx.Engine"
 
 	files {
 		"src/**.h",
-		"src/**.cpp"
+		"src/**.cpp",
+		"vendor/glm/glm/**.hpp",
+		"vendor/glm/glm/**.inl"
 	}
 
 	defines {
@@ -22,6 +24,7 @@ project "Onyx.Engine"
 		"src",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.glm}",
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.spdlog}"
 	}

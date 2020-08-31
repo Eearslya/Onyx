@@ -14,6 +14,7 @@ project "Onyx.Sandbox"
 	includedirs {
 		"src",
 		"%{wks.location}/Onyx.Engine/src",
+		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}"
 	}
 

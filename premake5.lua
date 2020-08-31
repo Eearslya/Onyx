@@ -24,6 +24,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 IncludeDir = {}
 IncludeDir["Glad"] = "%{wks.location}/Onyx.Engine/vendor/Glad/include"
 IncludeDir["GLFW"] = "%{wks.location}/Onyx.Engine/vendor/GLFW/include"
+IncludeDir["glm"] = "%{wks.location}/Onyx.Engine/vendor/glm"
 IncludeDir["imgui"] = "%{wks.location}/Onyx.Engine/vendor/imgui"
 IncludeDir["spdlog"] = "%{wks.location}/Onyx.Engine/vendor/spdlog/include"
 

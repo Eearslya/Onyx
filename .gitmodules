@@ -7,3 +7,6 @@
 [submodule "Onyx.Engine/vendor/imgui"]
 	path = Onyx.Engine/vendor/imgui
 	url = ../../Eearslya/imgui.git
+[submodule "Onyx.Engine/vendor/glm"]
+	path = Onyx.Engine/vendor/glm
+	url = ../../g-truc/glm.git
