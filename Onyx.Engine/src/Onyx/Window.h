@@ -31,6 +31,8 @@ class ONYX_API Window final {
   bool IsVSync() const;
   bool CloseRequested() const;
 
+  void* GetNativeHandle() const;
+
  private:
   WindowData* m_Data;
 };

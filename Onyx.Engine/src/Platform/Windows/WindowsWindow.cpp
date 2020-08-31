@@ -153,6 +153,8 @@ unsigned int Window::GetWidth() const { return m_Data->Width; };
 
 unsigned int Window::GetHeight() const { return m_Data->Height; };
 
+void* Window::GetNativeHandle() const { return reinterpret_cast<void*>(m_Data->Window); }
+
 void Window::SetVSync(bool enabled) {
   glfwSwapInterval(enabled ? 1 : 0);
   m_Data->VSync = enabled;

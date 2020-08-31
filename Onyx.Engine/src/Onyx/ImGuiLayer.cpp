@@ -116,14 +116,14 @@ bool ImGuiLayer::OnMouseReleased(const MouseReleasedEvent& e) {
 
 bool ImGuiLayer::OnMouseMoved(const MouseMovedEvent& e) {
   ImGuiIO& io = ImGui::GetIO();
-  io.MousePos = ImVec2(e.X, e.Y);
+  io.MousePos = ImVec2(static_cast<float>(e.X), static_cast<float>(e.Y));
 
   return false;
 }
 
 bool ImGuiLayer::OnMouseScrolled(const MouseScrolledEvent& e) {
   ImGuiIO& io = ImGui::GetIO();
-  io.MouseWheel += e.Offset;
+  io.MouseWheel += static_cast<float>(e.Offset);
 
   return false;
 }
