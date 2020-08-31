@@ -33,6 +33,7 @@ class Application {
   std::vector<Ref<Layer>> m_Layers;
   Ref<ImGuiLayer> m_ImGuiLayer;
   unsigned int m_LayerInsertIndex = 0;
+  unsigned int m_VAO = 0;
 
   static Application* s_Application;
 };
