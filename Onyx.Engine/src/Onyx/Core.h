@@ -14,6 +14,10 @@
 #error Unsupported platform!
 #endif
 
+#ifndef IMGUI_API
+#define IMGUI_API ONYX_API
+#endif
+
 #include <memory>
 
 namespace Onyx {

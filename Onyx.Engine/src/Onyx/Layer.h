@@ -13,5 +13,6 @@ class ONYX_API Layer {
   virtual void OnDetach() {}
   virtual void OnUpdate() {}
   virtual bool OnEvent(const Event& e) { return false; }
+  virtual void OnImGuiRender() {}
 };
 }  // namespace Onyx

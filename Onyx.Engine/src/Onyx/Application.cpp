@@ -16,6 +16,9 @@ Application::Application() {
   constexpr WindowProps props{"Onyx", 1600, 900};
   m_Window = CreateScope<Window>(props);
   m_Window->SetCallback([this](const Event& e) { OnEvent(e); });
+
+  m_ImGuiLayer = CreateRef<ImGuiLayer>();
+  PushOverlay(m_ImGuiLayer);
 }
 
 Application::~Application() {}
@@ -30,6 +33,12 @@ void Application::Run() {
     for (auto layer : m_Layers) {
       layer->OnUpdate();
     }
+
+    m_ImGuiLayer->Begin();
+    for (auto layer : m_Layers) {
+      layer->OnImGuiRender();
+    }
+    m_ImGuiLayer->End();
 
     m_Window->OnUpdate();
   }

@@ -15,6 +15,7 @@ project "Onyx.Sandbox"
 		"src",
 		"%{wks.location}/Onyx.Engine/src",
 		"%{IncludeDir.glm}",
+		"%{IncludeDir.imgui}",
 		"%{IncludeDir.spdlog}"
 	}
 

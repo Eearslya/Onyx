@@ -1,12 +1,13 @@
 #pragma once
 
+#include <memory>
+#include <vector>
+
 #include "Onyx/Core.h"
 #include "Onyx/Events/Event.h"
+#include "Onyx/ImGuiLayer.h"
 #include "Onyx/Layer.h"
 #include "Onyx/Window.h"
-
-#include <vector>
-#include <memory>
 
 namespace Onyx {
 class Application {
@@ -30,6 +31,7 @@ class Application {
   Scope<Window> m_Window;
   bool m_Running = false;
   std::vector<Ref<Layer>> m_Layers;
+  Ref<ImGuiLayer> m_ImGuiLayer;
   unsigned int m_LayerInsertIndex = 0;
 
   static Application* s_Application;
