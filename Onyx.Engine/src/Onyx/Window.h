@@ -4,6 +4,7 @@
 
 #include "Onyx/Core.h"
 #include "Onyx/Events/Event.h"
+#include "Onyx/Renderer/GraphicsContext.h"
 
 namespace Onyx {
 struct WindowProps {
@@ -35,5 +36,6 @@ class ONYX_API Window final {
 
  private:
   WindowData* m_Data;
+  GraphicsContext* m_Context;
 };
 }  // namespace Onyx

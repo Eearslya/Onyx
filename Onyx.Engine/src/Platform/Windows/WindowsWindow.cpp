@@ -3,12 +3,12 @@
 #ifdef ONYX_PLATFORM_WINDOWS
 
 #include <GLFW/glfw3.h>
-#include <glad/glad.h>
 
 #include "Onyx/Events/ApplicationEvent.h"
 #include "Onyx/Events/KeyEvent.h"
 #include "Onyx/Events/MouseEvent.h"
 #include "Onyx/Window.h"
+#include "Platform/OpenGL/OpenGLContext.h"
 
 namespace Onyx {
 struct WindowData {
@@ -45,12 +45,12 @@ Window::Window(const WindowProps& props) {
   glfwGetWindowSize(m_Data->Window, &windowW, &windowH);
   glfwSetWindowPos(m_Data->Window, monitorX + (mode->width - windowW) / 2,
                    monitorY + (mode->height - windowH) / 2);
-
-  glfwMakeContextCurrent(m_Data->Window);
   glfwSetWindowUserPointer(m_Data->Window, m_Data);
+
+  m_Context = new OpenGLContext(m_Data->Window);
+  m_Context->Init();
+
   SetVSync(true);
-  int glad = gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress));
-  OnyxAssert(glad, "Failed to initialize Glad");
 
   glfwSetWindowSizeCallback(m_Data->Window, [](GLFWwindow* window, int width, int height) {
     WindowData& data = *reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
@@ -138,13 +138,14 @@ Window::Window(const WindowProps& props) {
 }
 
 Window::~Window() {
+  delete m_Context;
   glfwDestroyWindow(m_Data->Window);
   delete m_Data;
 }
 
 void Window::OnUpdate() {
   glfwPollEvents();
-  glfwSwapBuffers(m_Data->Window);
+  m_Context->SwapBuffers();
 }
 
 void Window::SetCallback(std::function<void(const Event&)> func) { m_Data->Callback = func; }
